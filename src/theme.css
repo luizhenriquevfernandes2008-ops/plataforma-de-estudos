@@ -1,0 +1,29 @@
+.theme-toggle{padding:7px 12px;font-size:13px;letter-spacing:0;white-space:nowrap}
+header>.row{justify-content:flex-end}
+@media screen{
+  :root{color-scheme:light}
+  :root[data-theme="dark"]{color-scheme:dark;--ink:#edf4ef;--green:#9cd6b5;--lime:#d9f375;--muted:#afc0b5;--line:#36493f;--paper:#111a16;scrollbar-color:#52675b #19251f}
+  [data-theme="dark"] aside,[data-theme="dark"] .card,[data-theme="dark"] .pill,[data-theme="dark"] .secondary,[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{background:#19251f}
+  [data-theme="dark"] .brand>b{background:#234c39}
+  [data-theme="dark"] nav button:hover{background:#25372d}
+  [data-theme="dark"] nav button.active{background:#294335;color:#c4edce}
+  [data-theme="dark"] .today{background:#173f31}
+  [data-theme="dark"] .today p{color:#d0e2d7}
+  [data-theme="dark"] .today .eyebrow{color:var(--lime)}
+  [data-theme="dark"] .light{color:#173f31}
+  [data-theme="dark"] .primary{background:#c6e393;color:#17241c}
+  [data-theme="dark"] .secondary:hover:not(:disabled){background:#293b30}
+  [data-theme="dark"] .track{background:#334b3d}
+  [data-theme="dark"] .badge{background:#2b4134;color:#d7e9dc}
+  [data-theme="dark"] .notice{background:#2b3724;border-color:#556447;color:#e0ebd2}
+  [data-theme="dark"] .reading p{color:#c6d7cd}
+  [data-theme="dark"] .reading .example{background:#243323;border-color:#bdd78b}
+  [data-theme="dark"] .option b{background:#304338}
+  [data-theme="dark"] .option.selected{background:#2b4837;border-color:#9cd6b5}
+  [data-theme="dark"] .option.correct,[data-theme="dark"] .success{background:#234134;border-color:#85b997;color:#def2e4}
+  [data-theme="dark"] .option.wrong,[data-theme="dark"] .error{background:#432b29;border-color:#da938a;color:#ffdad4}
+  [data-theme="dark"] .result{background:#23352a}
+  [data-theme="dark"] input::placeholder,[data-theme="dark"] textarea::placeholder{color:#9eb3a6;opacity:1}
+  [data-theme="dark"] button:focus-visible,[data-theme="dark"] a:focus-visible,[data-theme="dark"] input:focus-visible,[data-theme="dark"] textarea:focus-visible,[data-theme="dark"] select:focus-visible{outline-color:#d9f375}
+}
+@media(max-width:1100px){header{flex-wrap:wrap;padding:15px 0;gap:10px}header>.row{justify-content:flex-start}}

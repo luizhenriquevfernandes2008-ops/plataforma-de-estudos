@@ -1,0 +1,24 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs/promises');
+const path=require('node:path');
+const os=require('node:os');
+const {createStore}=require('../store.cjs');
+test('durable writes, concurrent keys, backup and invalid records',async()=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'plataforma-store-test-'));
+ const store=createStore(directory);
+ assert.deepEqual(await store.read(),{});
+ await Promise.all([store.save('note',{text:'Teste de acentuação: revisão'}),store.save('lesson:e01',{done:true})]);
+ const reloaded=createStore(directory);
+ assert.equal((await reloaded.read()).note.text,'Teste de acentuação: revisão');
+ assert.equal((await reloaded.read())['lesson:e01'].done,true);
+ assert.equal(JSON.parse(await fs.readFile(store.file+'.bak','utf8')).note.text,'Teste de acentuação: revisão');
+ await assert.rejects(store.save('__proto__',{}));
+ await assert.rejects(store.merge({'note':{text:42}}));
+ await store.merge({'answer:q1':{correct:true,selected:0}});
+ assert.equal((await store.read())['lesson:e01'].done,true);
+ await fs.writeFile(store.file,'malformed');
+ await assert.rejects(store.save('note',{text:'Must not overwrite corruption'}));
+ assert.equal(await fs.readFile(store.file,'utf8'),'malformed');
+ console.log('Test files isolated in',directory);
+});
