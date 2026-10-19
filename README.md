@@ -1,96 +1,70 @@
-# Plataforma de Estudos
+# PEP — Plataforma de Estudos
 
-**Rumo à Prefeitura** é um aplicativo de estudos para Windows, com foco em Agente Administrativo da Prefeitura de Curitiba e rotina de **1 hora por dia**. Funciona offline para o conteúdo interno e salva o progresso no próprio computador.
+Aplicativo de estudos para Windows, versão **2.2.0**. Cursos offline, central de redações, radar de concursos e integração de contas com Supabase.
 
-![Interface com tema escuro](docs/tema-escuro.png)
+![Tela inicial de contas](docs/login.png)
 
-## Recursos
+## Cursos
 
-- 40 aulas-guia autorais com fundamentos, exemplos, pegadinhas e perguntas de revisão.
-- 80 questões autorais comentadas, filtros por matéria e caderno de erros.
-- Simulado completo de 40 questões e minissimulado de 10 questões.
-- 40 cartões de revisão espaçada e técnicas de memorização.
-- Plano de 10 semanas, cronômetro e registro diário de estudo.
-- Resumos para consulta e impressão, caderno pessoal e desempenho por matéria.
-- Biblioteca com 21 referências, materiais gratuitos, legislação, edital e provas anteriores.
-- Temas claro e escuro, com preferência salva.
-- Exportação, backup e restauração do progresso.
+| Trilha | Aulas-guia | Questões autorais |
+|---|---:|---:|
+| Curitiba — Agente Administrativo | 40 | 80 |
+| Banco do Brasil — Agente Comercial | 47 | 100 |
+| Banco do Brasil — Agente de Tecnologia | 50 | 102 |
 
-As aulas-guia são material de introdução e revisão. As questões do aplicativo são autorais; as provas oficiais anteriores estão identificadas separadamente. Livros, leis, cursos, editais e provas externas abrem no navegador e exigem internet.
+Inclui plano de 1 hora por dia, matérias, questões comentadas, simulados, cartões de memória, resumos, biblioteca de fontes, anotações, temas claro/escuro e abertura PEP com som original.
 
-<details><summary>Ver tema claro</summary>
+Curitiba: Edital 4/2026, com link para a versão retificada em 15/10/2026, consultada em 19/10/2026. BB: preparação antecipada baseada no edital histórico 2022/001 e provas de 2023. O app não presume um novo edital ou data de nova prova. Questões são autorais de apoio; provas oficiais e livros externos são links.
 
-![Interface com tema claro](docs/tema-claro.png)
+## Redações, radar e contas
 
-</details>
+- **Redações:** ENEM, BB, concursos, vestibulares e treino livre; rascunhos com salvamento automático, revisão local, correção com Groq, sugestões reversíveis e histórico por versão.
+- **Groq:** chave pessoal protegida pelo Windows. Uso gratuito depende do plano e limites da conta. Nota estimada, sem valor oficial; a revisão local não atribui nota.
+- **Radar:** consulta fontes oficiais, detecta novas publicações após uma consulta inicial, organiza etapas e envia lembretes enquanto o app está aberto ou na bandeja. ENEM e autorizações federais são fontes opcionais. Não cobre todos os concursos nem atualiza automaticamente prazos da agenda.
+- **Contas:** cadastro, login, confirmação por e-mail, recuperação por código, sessão protegida e progresso separado por usuário. Sincronização com cópia local e tratamento explícito de conflitos.
 
-## Executar a partir do código
+**A nuvem ainda precisa ser ativada em um projeto seu.** A entrega não inclui projeto Supabase ou serviço de e-mail configurados. Sem essa configuração, use **Abrir meu perfil local antigo**. Veja [Configurar nuvem](docs/CONFIGURAR-NUVEM.md) e execute [o SQL](supabase/setup.sql) no projeto. A mesma conta funciona em outros computadores Windows com a PEP e o mesmo projeto configurado.
 
-Requisitos: **Windows 10/11 de 64 bits**, Git e **Node.js 22.13 ou superior**, com npm. A primeira instalação baixa as dependências e o Electron; depois disso o aplicativo não precisa de conexão para estudar o conteúdo interno.
+![Central de redações](docs/redacoes.png)
 
-```sh
-git clone https://github.com/luizhenriquevfernandes2008-ops/plataforma-de-estudos.git
-cd plataforma-de-estudos
+## Usar no Windows
+
+Baixe o pacote na página de [releases](https://github.com/luizhenriquevfernandes2008-ops/plataforma-de-estudos/releases), extraia a pasta inteira e abra `PEP.exe`. Não mova só o executável. O pacote é uma versão de testes sem assinatura digital.
+
+O app inicia em tela cheia. **Esc** sai e **F11** alterna. **Alt** mostra o menu para exportar/importar backup. Consulte o [guia de uso](docs/GUIA-PEP.md).
+
+## Desenvolver e testar
+
+Requisitos: Node.js >=22.13, npm; Windows para gerar o pacote desta distribuição.
+
+```powershell
 npm ci
+node node_modules/electron/install.js
+npm run typecheck
+npm test
 npm start
 ```
 
-Se o gerenciador de pacotes bloquear os scripts de instalação do Electron, execute `node node_modules/electron/install.js` antes de `npm start`.
+O comando de instalação do Electron também atende ambientes com scripts do npm desabilitados. Para empacotar:
 
-`npm start` compila a interface e abre a janela do aplicativo. A persistência é oferecida pelo processo Electron; abrir apenas o HTML em um navegador não fornece o armazenamento de progresso.
-
-## Compilar o aplicativo Windows
-
-```sh
-npm run typecheck
-npm test
+```powershell
 npm run package:win
 ```
 
-O resultado fica em `dist/Rumo a Prefeitura-win32-x64/`. Execute `Rumo a Prefeitura.exe` dentro dessa pasta. Para criar um atalho na área de trabalho, use o menu de contexto do executável. Mantenha todos os arquivos da pasta juntos.
+Saída: `dist/PEP-win32-x64/PEP.exe`. O empacotador usa uma lista explícita de arquivos e não inclui testes, perfis, credenciais ou fonte de desenvolvimento. Preserve a pasta de um pacote anterior antes de gerar outro.
 
-O empacotador evita sobrescrever uma compilação anterior. Antes de gerar outra versão, mova a pasta anterior para outro local. O aplicativo gerado não possui assinatura digital de distribuição.
+## Dados e funcionamento
 
-## Uso e armazenamento
+Os dados ficam em `%APPDATA%\PEP-Estudos-2.1`, nome mantido por compatibilidade. O perfil antigo permanece na raiz; contas usam subpastas próprias. A chave Groq e a sessão são protegidas por `safeStorage`/Windows e não entram no backup ou na sincronização. As senhas dos alunos são tratadas pelo Supabase Auth e não são persistidas pela PEP. Os arquivos de progresso locais não são criptografados; a sessão permanece conectada até sair. Use contas Windows separadas se outras pessoas também acessam o computador.
 
-1. Em **Meu estudo**, escolha **Começar a estudar**.
-2. Divida a sessão em 10 minutos de revisão, 25 de aula, 20 de questões e 5 de anotações.
-3. Use **Tema escuro / Tema claro** no topo para alternar a aparência.
-4. Clique em **Salvar caderno** após editar suas anotações.
-5. Use **Arquivo → Salvar backup** regularmente. **Restaurar backup** permite recuperar uma cópia.
+A sincronização envia progresso, textos e correções ao projeto configurado. As políticas RLS do SQL isolam as contas. Mudanças independentes são combinadas; mudanças concorrentes no mesmo registro exigem escolha. Chaves Groq, cache de notícias e opções locais de notificações não são sincronizados. Backups v1–v4 são aceitos; v4 exporta somente o perfil aberto.
 
-No Windows, os dados ficam em `%APPDATA%/RumoAPrefeitura/progresso.json`. O arquivo `.bak` conserva a gravação anterior. O menu **Arquivo → Pasta do progresso** abre esse local.
+O radar exige internet para consultar fontes; os cursos e a revisão por regras funcionam offline. Notificações dependem do Windows e do app em execução. Não há garantia de armazenamento perpétuo, disponibilidade de terceiros, nota oficial ou aprovação.
 
-O cronômetro e o simulado em andamento não são retomados depois de fechar o app. Conclua e salve o resultado antes de sair. Os resultados salvos, respostas, anotações, revisões, aulas concluídas e preferência de tema permanecem.
+## Validação e limites da entrega
 
-O repositório não contém dados pessoais de estudo, perfis de execução, chaves ou credenciais. Não é necessário configurar serviços de nuvem ou variáveis de ambiente para usar o aplicativo.
+Testes automatizados cobrem conteúdo, gravação, isolamento, correção estruturada, chaves, limites de API, extração de publicações, sessões e conflitos. A interface foi exercitada no Electron, incluindo backup e navegação. As cinco fontes do radar responderam à consulta de 19/10/2026.
 
-## Estrutura
+Groq e Supabase foram testados com respostas simuladas. **Não houve correção real com chave Groq nem implantação/validação do banco Supabase real nesta entrega.** Confirmação e recuperação de e-mail dependem do SMTP e dos templates do projeto. Veja [o estado da versão](docs/STATUS.md).
 
-```text
-src/                 Interface React, aulas, questões e estilos
-main.cjs             Janela Electron, protocolo local, menus e backup
-store.cjs            Leitura, validação e gravação do progresso
-scripts/package.cjs  Empacotamento Windows
-tests/               Testes do armazenamento
-docs/                Imagens da interface
-```
-
-Tecnologias: Electron, React, TypeScript, Vite, Tailwind CSS e Lucide. A janela usa isolamento de contexto e sandbox, sem integração Node.js no conteúdo da interface. Links externos HTTPS abrem no navegador padrão.
-
-## Fontes e atualização do conteúdo
-
-Conteúdo organizado com base na pesquisa de **05/10/2026**, para o **Edital 4/2026**, da Fundação FAFIPA. Datas, requisitos e legislação podem receber alterações; confira as publicações oficiais antes de tomar decisões.
-
-- [Página oficial do concurso na FAFIPA](https://fafipa.selecao.net.br/concurso/4209-concurso-publico-do-municipio-de-curitiba-pr-medio)
-- [Edital 4/2026](https://mid-rh.curitiba.pr.gov.br/Arquivo/Concurso/2026/CP%20-%20EDITAL%20NORMATIVO%20N%C2%BA%204.pdf)
-- [Conteúdo programático](https://mid-rh.curitiba.pr.gov.br/Arquivo/Concurso/2026/Anexo%20II%20-%20Conte%C3%BAdos%20Program%C3%A1ticos%20-%204_2026.pdf)
-- [Prova de Agente Administrativo de 2019 com gabarito, NC/UFPR](https://servicos.nc.ufpr.br/documentos/pmc20192/provas/501.pdf)
-
-A prova de 2019 pertence a outra banca. Legislação e versões de software exigem comparação com o edital atual. As demais referências estão em `src/content.ts` e na biblioteca do aplicativo.
-
-Aplicativo independente, sem vínculo com a Prefeitura ou com a banca. O material e o desempenho nos treinos não garantem aprovação.
-
-## Licenciamento
-
-Este repositório disponibiliza o código para consulta pública, mas ainda não concede uma licença de software livre. Dependências e materiais externos permanecem sujeitos às respectivas licenças e direitos. O valor `private: true` no `package.json` impede publicação acidental no npm; ele não torna este repositório privado no GitHub.
+Principais módulos: `main.cjs` (desktop/API local), `essay-service.cjs` (revisão), `radar.cjs` (fontes), `cloud-auth.cjs` (contas), `cloud-sync.cjs` (sincronização), `src/account-ui.tsx`, `src/writing-studio.tsx`, `src/radar-view.tsx` e `src/course-room.tsx`. Os arquivos antigos de interface foram preservados como referência.

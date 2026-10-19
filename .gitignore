@@ -17,3 +17,14 @@ progresso.json*
 store-test-*/
 .DS_Store
 Thumbs.db
+
+# Credenciais e dados locais
+*.enc
+*.enc.tmp
+radar-cache.json*
+PEP-backup-*.json
+
+cloud-config.json
+sync-state.json*
+perfis/
+profile-choice.json

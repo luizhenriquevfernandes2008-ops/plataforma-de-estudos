@@ -1,75 +1,159 @@
-const {app,BrowserWindow,protocol,shell,Menu,dialog,session,nativeTheme} = require('electron');
-const fs = require('node:fs/promises');
-const path = require('node:path');
-const {createStore,validate} = require('./store.cjs');
-app.setName('RumoAPrefeitura');
-app.setPath('userData', (!app.isPackaged && process.env.RUMO_QA_DIR) || path.join(app.getPath('appData'), 'RumoAPrefeitura'));
-protocol.registerSchemesAsPrivileged([{scheme:'study',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true}}]);
-const store = createStore(app.getPath('userData'));
-const root = path.join(__dirname,'renderer');
-const csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
-const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.woff2':'font/woff2'};
+const {app,BrowserWindow,protocol,shell,Menu,dialog,session,nativeTheme,safeStorage,Notification,Tray}=require('electron');
+const fs=require('node:fs/promises');
+const path=require('node:path');
+const {createStore,validate}=require('./store.cjs');
+const {validateCentral}=require('./central-store.cjs');
+const {createEssayService,localReview,validateDraft}=require('./essay-service.cjs');
+const {createRadar,DEFAULT}=require('./radar.cjs');
+const {createCloudAuth}=require('./cloud-auth.cjs');
+const {createCloudSync}=require('./cloud-sync.cjs');
+app.setName('PEPEstudos22');
+app.setAppUserModelId('PEP.Estudos.22');
+app.setPath('userData',(!app.isPackaged&&process.env.PEP_QA_DIR)||path.join(app.getPath('appData'),'PEP-Estudos-2.1'));
+protocol.registerSchemesAsPrivileged([{scheme:'study',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true,stream:true}}]);
+const ids=['curitiba','bb-comercial','bb-tecnologia'];
+const baseDirectory=app.getPath('userData');
+const auth=createCloudAuth(baseDirectory,safeStorage);
+let stores,preferences,central,essays,radar,syncer=null,profile=null,profileDirectory=baseDirectory,switching=false,activeWrites=0,accountBusy=false;
+function setStores(directory){profileDirectory=directory;stores=Object.fromEntries(ids.map(id=>[id,createStore(path.join(directory,id))]));preferences=createStore(path.join(directory,'preferencias'));central=createStore(path.join(directory,'central'),validateCentral);essays=createEssayService(directory,safeStorage);}
+setStores(baseDirectory);
+async function accountStatus(){return {...auth.publicStatus(),profile,sync:syncer?await syncer.status():null};}
+async function activate(guest=false){
+ if(activeWrites)throw Error('Aguarde o salvamento terminar antes de trocar de conta.');
+ switching=true;
+ try{radar?.stop();await syncer?.stop();syncer=null;
+ const user=auth.publicStatus().user;if(!guest&&!user)throw Error('Entre na sua conta.');
+ profile=guest?{id:'local',email:null}:user;setStores(guest?baseDirectory:path.join(baseDirectory,'perfis',auth.profileId()));
+ await fs.mkdir(baseDirectory,{recursive:true});await fs.writeFile(path.join(baseDirectory,'profile-choice.json'),JSON.stringify({guest}));
+ if(!guest){const all={...stores,preferencias:preferences,central};syncer=createCloudSync(profileDirectory,auth,all,Object.fromEntries(Object.keys(all).map(k=>[k,k==='central'?validateCentral:validate])),{canApply:async()=>switching||!win||await win.webContents.executeJavaScript("!window.dispatchEvent?false:window.dispatchEvent(new Event('beforeunload',{cancelable:true}))"),onApplied:async()=>{if(!switching&&win)win.reload();}});await syncer.init();await syncer.sync();syncer.start();}
+ const owner=profile.id;radar=createRadar(profileDirectory,central,(...args)=>{if(profile?.id===owner&&!switching)notify(...args);});await radar.init();background=((await central.read())['settings:radar']||DEFAULT).background;if(!process.env.PEP_QA_DIR)radar.start();
+ }finally{switching=false;}
+ return accountStatus();
+}
+async function accountHandler(request){
+ try{if(request.method==='GET')return json(await accountStatus());if(request.method!=='POST')return json({error:'Método inválido.'},405);
+ const raw=await request.text();if(raw.length>20000)throw Error('Solicitação muito grande.');const p=JSON.parse(raw);
+ if(switching)throw Error('Aguarde a troca de perfil.');
+ if(p.action==='config')return json(await auth.configure(p));
+ if(p.action==='guest')return json(await activate(true));
+ if(p.action==='login'||p.action==='signup'||p.action==='reset'||p.action==='confirm'){
+  if(profile&&profile.id!=='local')throw Error('Saia da conta atual primeiro.');
+  const result=p.action==='login'?await auth.login(p.email,p.password):p.action==='signup'?await auth.signup(p.email,p.password):p.action==='confirm'?await auth.confirm(p.email,p.code):await auth.resetPassword(p.email,p.code,p.password);
+  return json(result.user?await activate():result);
+ }
+ if(p.action==='resend')return json(await auth.resend(p.email));
+ if(p.action==='recover')return json(await auth.recover(p.email));
+ if(p.action==='sync'){if(!syncer)throw Error('Entre em uma conta para sincronizar.');await syncer.sync(p.choices||{});return json(await accountStatus());}
+ if(p.action==='logout'){
+  if(activeWrites)throw Error('Aguarde o salvamento terminar antes de sair.');switching=true;
+  try{radar?.stop();await syncer?.stop();await auth.logout();await fs.unlink(path.join(baseDirectory,'profile-choice.json')).catch(e=>{if(e.code!=='ENOENT')throw e;});syncer=null;profile=null;setStores(baseDirectory);background=false;}finally{switching=false;}return json(await accountStatus());
+ }
+ throw Error('Operação de conta inválida.');
+ }catch(e){return json({error:e.message||'Não foi possível acessar a conta.'},400);}
+}
+let background=true,quitting=false,tray;const notices=new Set();
+function notify(title,body){if(process.env.PEP_QA_DIR||!Notification.isSupported())return;const n=new Notification({title,body,icon:path.join(__dirname,'icon.png')});notices.add(n);n.on('click',()=>{if(win){win.show();win.focus();win.webContents.executeJavaScript("window.dispatchEvent(new Event('pep-open-radar'))").catch(()=>{});}});n.on('close',()=>notices.delete(n));n.on('failed',()=>notices.delete(n));n.show();}
+
+const root=path.join(__dirname,'renderer');
+const csp="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.wav':'audio/wav'};
 let win;
-function external(url) {
-  try { const u=new URL(url); if(u.protocol==='https:' && !u.username && !u.password) shell.openExternal(u.href); } catch {}
+const json=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});
+function external(url){try{const u=new URL(url);if(u.protocol==='https:'&&!u.username&&!u.password)shell.openExternal(u.href);}catch{}}
+async function handler(request){
+ const route=new URL(request.url).pathname;
+ if(new URL(request.url).hostname!=='app')return json({error:'Endereço inválido.'},403);
+ if(route==='/api/account'){if(request.method==='GET')return accountHandler(request);if(accountBusy)return json({error:'Aguarde a operação de conta terminar.'},409);accountBusy=true;try{return await accountHandler(request);}finally{accountBusy=false;}}
+ if(route.startsWith('/api/')&&route!=='/api/window'&&(!profile||switching))return json({error:'Entre em uma conta ou abra o perfil local.'},401);
+ const writing=request.method==='POST';if(writing)activeWrites++;
+ try{return await routeHandler(request);}finally{if(writing)activeWrites--;}
 }
-function json(value,status=200){return new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});}
-async function handler(request) {
-  const url = new URL(request.url);
-  if(url.hostname !== 'app') return new Response('Endereço inválido',{status:403});
-  if(url.pathname === '/api/study') {
-    try {
-      if(request.method === 'GET') return json({records:await store.read()});
-      if(request.method !== 'POST') return json({error:'Método inválido.'},405);
-      const raw=await request.text();
-      if(raw.length>30000) return json({error:'Registro muito grande.'},413);
-      const {key,value}=JSON.parse(raw);
-      validate({[key]:value});
-      await store.save(key,value);
-      if(key==='settings:theme'){nativeTheme.themeSource=value.mode;win?.setBackgroundColor(value.mode==='dark'?'#111a16':'#f5f7f5');}
-      return json({ok:true});
-    } catch(e) {return json({error:e.message || 'Não foi possível salvar o progresso.'},503);}
-  }
-  if(request.method!=='GET') return new Response('Método inválido',{status:405});
-  try {
-    const file=path.resolve(root, '.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
-    if(!file.startsWith(root+path.sep)) return new Response('Acesso negado',{status:403});
-    let content=await fs.readFile(file);
-    if(path.extname(file)==='.html'){
-      let mode='light';try{mode=(await store.read())['settings:theme']?.mode==='dark'?'dark':'light';}catch{}
-      nativeTheme.themeSource=mode;
-      content=Buffer.from(content.toString('utf8').replace('<html lang="pt-BR">','<html lang="pt-BR" data-theme="'+mode+'">'));
-    }
-    return new Response(content,{headers:{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Content-Security-Policy':csp}});
-  } catch {return new Response('Arquivo não encontrado',{status:404});}
+async function routeHandler(request){
+ const u=new URL(request.url);if(u.hostname!=='app')return json({error:'Endereço inválido.'},403);
+ if(['/api/central','/api/writing/review','/api/groq/config','/api/radar','/api/window'].includes(u.pathname)){
+  try{
+   let payload={};if(request.method==='POST'){const raw=await request.text();if(raw.length>220000)return json({error:'Conteúdo muito grande.'},413);payload=JSON.parse(raw);}else if(request.method!=='GET')return json({error:'Método inválido.'},405);
+   if(u.pathname==='/api/window'){if(request.method==='POST'){if(payload.action==='fullscreen')win.setFullScreen(!win.isFullScreen());else if(payload.action==='minimize')win.minimize();}return json({fullscreen:win.isFullScreen()});}
+   if(u.pathname==='/api/central'){
+    if(request.method==='GET')return json({records:await central.read()});validateCentral({[payload.key]:payload.value});
+    if(payload.key==='settings:radar'&&payload.value.startAtLogin!==((await central.read())['settings:radar']||DEFAULT).startAtLogin){if(!app.isPackaged)throw Error('Iniciar com o Windows está disponível no aplicativo empacotado.');app.setLoginItemSettings({openAtLogin:payload.value.startAtLogin,path:process.execPath,args:['--background']});}
+    await central.save(payload.key,payload.value);if(payload.key==='settings:radar')background=payload.value.background;return json({ok:true});
+   }
+   if(u.pathname==='/api/groq/config'){if(request.method==='GET')return json(await essays.config());return json(payload.remove?await essays.remove():await essays.configure(payload.key));}
+   if(u.pathname==='/api/writing/review'){if(request.method!=='POST')return json({error:'Envie a redação para corrigir.'},405);validateDraft(payload.draft);if(!/^draft:[a-zA-Z0-9-]{1,60}$/.test(payload.draftId))throw Error('Identificador de redação inválido.');if(!['local','groq'].includes(payload.kind))throw Error('Tipo de correção inválido.');await central.save(payload.draftId,{...payload.draft,updatedAt:new Date().toISOString(),archived:false});const result=payload.kind==='groq'?await essays.assess(payload.draft,payload.model):localReview(payload.draft);const key='review:'+require('node:crypto').randomUUID();const value={draftId:payload.draftId,draft:payload.draft,result};await central.save(key,value);return json({key,value});}
+   if(u.pathname==='/api/radar'){if(request.method==='POST'&&payload.action==='check')return json(await radar.check(true));if(request.method==='POST'&&payload.action==='read')return json(await radar.markRead());if(request.method==='POST'&&payload.action==='test'){notify('PEP · aviso de teste','Os próximos prazos e novas publicações aparecerão aqui.');return json({ok:true,supported:Notification.isSupported()});}return json(await radar.status());}
+  }catch(e){return json({error:e.message||'Não foi possível concluir a operação.'},400);}
+ }
+ if(['/api/study','/api/preferences'].includes(u.pathname)){
+  const pref=u.pathname==='/api/preferences';const selected=pref?preferences:stores[u.searchParams.get('course')];
+  if(!selected)return json({error:'Curso inválido.'},400);
+  try{
+   if(request.method==='GET')return json({records:await selected.read()});
+   if(request.method!=='POST')return json({error:'Método inválido.'},405);
+   const raw=await request.text();if(raw.length>72000)return json({error:'Registro muito grande.'},413);
+   const {key,value}=JSON.parse(raw);if(pref&&!['settings:theme','settings:sound'].includes(key))return json({error:'Preferência inválida.'},400);
+   validate({[key]:value});await selected.save(key,value);
+   if(pref&&key==='settings:theme'){nativeTheme.themeSource=value.mode;win?.setBackgroundColor(value.mode==='dark'?'#111923':'#f4f5f7');}
+   return json({ok:true});
+  }catch(e){return json({error:e.message||'Não foi possível salvar.'},503);}
+ }
+ if(request.method!=='GET')return json({error:'Método inválido.'},405);
+ try{
+  const file=path.resolve(root,'.'+decodeURIComponent(u.pathname==='/'?'/index.html':u.pathname));if(!file.startsWith(root+path.sep))return json({error:'Acesso negado.'},403);
+  let content=await fs.readFile(file);
+  if(path.extname(file)==='.html'){let mode='light';try{mode=(await preferences.read())['settings:theme']?.mode==='dark'?'dark':'light';}catch{}nativeTheme.themeSource=mode;content=Buffer.from(content.toString('utf8').replace('<html lang="pt-BR">','<html lang="pt-BR" data-theme="'+mode+'">'));}
+  return new Response(content,{headers:{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Content-Security-Policy':csp}});
+ }catch{return json({error:'Arquivo não encontrado.'},404);}
 }
-async function backup(){
-  try {const result=await dialog.showSaveDialog(win,{title:'Salvar backup do estudo',defaultPath:path.join(app.getPath('documents'),'curitiba-progresso-'+new Date().toISOString().slice(0,10)+'.json'),filters:[{name:'Backup do progresso',extensions:['json']}]});if(result.canceled)return;await fs.writeFile(result.filePath,JSON.stringify({app:'Rumo à Prefeitura',version:1,records:await store.read()},null,2));await dialog.showMessageBox(win,{type:'info',message:'Backup salvo.',detail:'Guarde uma cópia em outro lugar para proteger seus estudos.'});}catch(e){dialog.showErrorBox('Backup não salvo',e.message);}
+async function backup(){try{
+ if(!profile)throw Error('Abra uma conta ou o perfil local antes de exportar.');
+ const result=await dialog.showSaveDialog(win,{title:'Backup de todos os cursos',defaultPath:path.join(app.getPath('documents'),'PEP-backup-'+new Date().toISOString().slice(0,10)+'.json'),filters:[{name:'Backup PEP',extensions:['json']}]});if(result.canceled)return;
+ const courses=Object.fromEntries(await Promise.all(ids.map(async id=>[id,await stores[id].read()])));
+ await fs.writeFile(result.filePath,JSON.stringify({app:'PEP',version:4,account:profile,preferences:await preferences.read(),courses,central:await central.read()},null,2));
+ await dialog.showMessageBox(win,{message:'Backup completo salvo.',detail:'Inclui cursos, central de redações, correções e agenda. A chave Groq fica protegida no Windows e não entra no backup.'});
+}catch(e){dialog.showErrorBox('Backup não salvo',e.message);}}
+async function restore(){try{
+ if(!profile)throw Error('Abra a conta de destino ou o perfil local antes de importar.');
+ const result=await dialog.showOpenDialog(win,{title:'Restaurar backup PEP ou Prefeitura',properties:['openFile'],filters:[{name:'Backup',extensions:['json']}]});if(result.canceled)return;
+ const data=JSON.parse(await fs.readFile(result.filePaths[0],'utf8'));const incoming=[2,3,4].includes(data.version)&&data.courses?data.courses:{curitiba:data.records||data};
+ const incomingCentral=validateCentral(data.central||{});
+ if(incomingCentral['settings:radar'])incomingCentral['settings:radar'].startAtLogin=((await central.read())['settings:radar']||DEFAULT).startAtLogin;
+ for(const [id,records]of Object.entries(incoming)){if(!ids.includes(id))throw new Error('Curso desconhecido no backup.');validate(records);}
+ const prefs=validate(data.preferences||{});if(Object.keys(prefs).some(k=>!['settings:theme','settings:sound'].includes(k)))throw new Error('Preferências inválidas.');
+ const answer=await dialog.showMessageBox(win,{type:'question',buttons:['Cancelar','Restaurar'],defaultId:0,cancelId:0,message:'Restaurar os registros deste backup?',detail:'Registros correspondentes serão substituídos; os demais serão mantidos. Salve suas anotações e conclua o simulado antes de restaurar. Backups antigos entram somente em Curitiba.'});if(answer.response!==1)return;
+ for(const [id,records]of Object.entries(incoming))await stores[id].merge(records);
+ await preferences.merge(prefs);await central.merge(incomingCentral);background=((await central.read())['settings:radar']||DEFAULT).background;win.reload();
+}catch(e){dialog.showErrorBox('Backup não restaurado',e.message);}}
+async function importLegacy(){
+ if(process.env.PEP_QA_DIR)return;
+ try{await fs.access(stores.curitiba.file);return;}catch(e){if(e.code!=='ENOENT')return;}
+ try{const records=validate(JSON.parse(await fs.readFile(path.join(app.getPath('appData'),'RumoAPrefeitura','progresso.json'),'utf8')));await stores.curitiba.merge(records);const prefs=await preferences.read();if(records['settings:theme']&&!prefs['settings:theme'])await preferences.save('settings:theme',records['settings:theme']);}catch(e){if(e.code!=='ENOENT')dialog.showErrorBox('Progresso antigo preservado','Não foi possível copiar automaticamente. A versão antiga permanece intacta. Você pode importar um backup pelo menu Arquivo.');}
 }
-async function restore(){
-  try {const result=await dialog.showOpenDialog(win,{title:'Restaurar backup',properties:['openFile'],filters:[{name:'Backup do progresso',extensions:['json']}]});if(result.canceled)return;const data=JSON.parse(await fs.readFile(result.filePaths[0],'utf8'));const records=validate(data.records||data);const confirm=await dialog.showMessageBox(win,{type:'question',buttons:['Cancelar','Restaurar'],defaultId:0,cancelId:0,message:'Restaurar este backup?',detail:'Os registros do backup substituirão os registros correspondentes. Os demais serão mantidos. Salve antes as anotações que estiverem abertas.'});if(confirm.response!==1)return;await store.merge(records);win.reload();}catch(e){dialog.showErrorBox('Não foi possível restaurar',e.message);}
+async function importPrevious(){
+ if(process.env.PEP_QA_DIR)return;
+ for(const id of [...ids,'preferencias']){const target=id==='preferencias'?preferences:stores[id];try{await fs.access(target.file);continue;}catch(e){if(e.code!=='ENOENT')continue;}try{const records=validate(JSON.parse(await fs.readFile(path.join(app.getPath('appData'),'PEP-Estudos-Teste',id,'progresso.json'),'utf8')));await target.merge(records);}catch(e){if(e.code!=='ENOENT')dialog.showErrorBox('Dados anteriores preservados','Não foi possível copiar '+id+'. A versão 2.0 continua intacta; restaure um backup pelo menu Arquivo.');}}
 }
+function createTray(){try{tray=new Tray(path.join(__dirname,'icon.ico'));tray.setToolTip('PEP · Radar de concursos');tray.on('double-click',()=>{win.show();win.focus();});tray.setContextMenu(Menu.buildFromTemplate([{label:'Abrir PEP',click:()=>{win.show();win.focus();}},{label:'Verificar publicações agora',click:()=>radar?.check(true).catch(()=>{})},{label:'Sair completamente',click:()=>{quitting=true;app.quit();}}]));}catch{background=false;}}
 function createWindow(){
-  win = new BrowserWindow({width:1360,height:920,minWidth:900,minHeight:640,title:'Rumo à Prefeitura · Curitiba',backgroundColor:'#f5f7f5',icon:path.join(__dirname,'icon.ico'),show:true,webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,spellcheck:false}});
-  const log=message=>fs.appendFile(path.join(app.getPath('userData'),'diagnostico.log'),new Date().toISOString()+' '+message+'\n').catch(()=>{});
-  win.webContents.on('console-message',(_event,details)=>log('renderer: '+JSON.stringify(details)));
-  win.webContents.on('did-fail-load',(_event,code,message)=>log('load failed: '+code+' '+message));
-  win.webContents.on('did-finish-load',()=>log('Interface carregada.'));
-  win.webContents.setWindowOpenHandler(({url})=>{external(url);return {action:'deny'};});
-  win.webContents.on('will-navigate',(event,url)=>{const u=new URL(url);if(u.protocol!=='study:'||u.hostname!=='app'){event.preventDefault();external(url);}});
-  win.webContents.on('will-prevent-unload',event=>{const answer=dialog.showMessageBoxSync(win,{type:'question',buttons:['Continuar estudando','Sair sem salvar'],defaultId:0,cancelId:0,message:'Há anotações não salvas ou um simulado em andamento.',detail:'Volte para salvar suas anotações ou concluir o simulado antes de sair.'});if(answer===1)event.preventDefault();});
-  win.once('ready-to-show',()=>win.show());
-  win.loadURL('study://app/');
-  Menu.setApplicationMenu(Menu.buildFromTemplate([
-    {label:'Arquivo',submenu:[{label:'Salvar backup…',accelerator:'CmdOrCtrl+Shift+S',click:backup},{label:'Restaurar backup…',click:restore},{label:'Pasta do progresso',click:()=>shell.openPath(app.getPath('userData'))},{type:'separator'},{label:'Imprimir página…',accelerator:'CmdOrCtrl+P',click:()=>win.webContents.print({printBackground:true})},{type:'separator'},{label:'Sair',role:'quit'}]},
-    {label:'Editar',submenu:[{label:'Desfazer',role:'undo'},{label:'Refazer',role:'redo'},{type:'separator'},{label:'Recortar',role:'cut'},{label:'Copiar',role:'copy'},{label:'Colar',role:'paste'},{label:'Selecionar tudo',role:'selectAll'}]},
-    {label:'Exibir',submenu:[{label:'Recarregar',role:'reload'},{label:'Tamanho original',role:'resetZoom'},{label:'Aumentar',role:'zoomIn'},{label:'Diminuir',role:'zoomOut'},{label:'Tela inteira',role:'togglefullscreen'}]},
-    {label:'Ajuda',submenu:[{label:'Como estudar',click:()=>dialog.showMessageBox(win,{type:'info',message:'Uma hora por dia, com constância.',detail:'Comece por Meu estudo. Reserve 10 min para revisão, 25 min para a aula, 20 min para questões e 5 min para o caderno. Use Arquivo → Salvar backup semanalmente.\n\nAulas, questões e progresso funcionam sem internet. Livros, editais e provas externas abrem no navegador.\n\nMaterial autoral de apoio, baseado no Edital 4/2026. Consulte retificações na banca. A preparação não garante aprovação.'})},{label:'Sobre o aplicativo',click:()=>dialog.showMessageBox(win,{type:'info',message:'Rumo à Prefeitura · Curitiba',detail:'Versão 1.1.0 • Windows\nAgente Administrativo • Plano de 1 hora por dia\n40 aulas de apoio • 80 questões autorais comentadas\nFontes verificadas em 05/10/2026.\nAplicativo pessoal, sem vínculo com a Prefeitura ou com a banca.'})}]}
-  ]));
+ const hidden=process.argv.includes('--background');
+ win=new BrowserWindow({width:1380,height:940,minWidth:940,minHeight:680,fullscreen:true,show:!hidden,autoHideMenuBar:true,title:'PEP · Plataforma de Estudos',backgroundColor:'#111923',icon:path.join(__dirname,'icon.ico'),webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,spellcheck:false,backgroundThrottling:false,autoplayPolicy:'no-user-gesture-required'}});
+ win.on('close',event=>{if(!quitting&&background){event.preventDefault();win.hide();}});
+ win.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&(input.key==='F11'||input.key==='Escape'&&win.isFullScreen())){event.preventDefault();win.setFullScreen(!win.isFullScreen());}});
+ win.webContents.setWindowOpenHandler(({url})=>{external(url);return{action:'deny'};});
+ win.webContents.on('will-navigate',(event,url)=>{const u=new URL(url);if(u.protocol!=='study:'||u.hostname!=='app'){event.preventDefault();external(url);}});
+ win.webContents.on('will-prevent-unload',event=>{const answer=dialog.showMessageBoxSync(win,{type:'question',buttons:['Continuar estudando','Sair sem salvar'],defaultId:0,cancelId:0,message:'Há alterações não salvas ou um simulado em andamento.',detail:'Volte para salvar seu trabalho antes de sair.'});if(answer===1)event.preventDefault();else quitting=false;});
+ win.loadURL('study://app/'+(hidden?'?background=1':''));
+ Menu.setApplicationMenu(Menu.buildFromTemplate([
+ {label:'Arquivo',submenu:[{label:'Salvar backup de todos os cursos…',accelerator:'CmdOrCtrl+Shift+S',click:backup},{label:'Restaurar backup…',click:restore},{label:'Pasta do progresso',click:()=>shell.openPath(profileDirectory)},{type:'separator'},{label:'Imprimir página…',accelerator:'CmdOrCtrl+P',click:()=>win.webContents.print({printBackground:true})},{label:'Sair',role:'quit'}]},
+ {label:'Editar',submenu:[{label:'Desfazer',role:'undo'},{label:'Refazer',role:'redo'},{type:'separator'},{label:'Recortar',role:'cut'},{label:'Copiar',role:'copy'},{label:'Colar',role:'paste'},{label:'Selecionar tudo',role:'selectAll'}]},
+ {label:'Exibir',submenu:[{label:'Recarregar',role:'reload'},{label:'Tamanho original',role:'resetZoom'},{label:'Aumentar',role:'zoomIn'},{label:'Diminuir',role:'zoomOut'},{label:'Tela inteira',role:'togglefullscreen'}]},
+ {label:'Ajuda',submenu:[{label:'Como estudar',click:()=>dialog.showMessageBox(win,{message:'Uma hora por dia.',detail:'10 min de revisão, 25 min de aula, 20 min de questões e 5 min de caderno. Escolha uma trilha por sessão. O progresso dos cursos é separado.\n\nConteúdo e progresso funcionam offline. Fontes e livros externos precisam de internet. Salve um backup semanal pelo menu Arquivo.'})},{label:'Sobre PEP',click:()=>dialog.showMessageBox(win,{message:'PEP · 2.2.0 · Versão de testes',detail:'Curitiba: Agente Administrativo. Banco do Brasil: Agente Comercial e Agente de Tecnologia.\n\nBB usa edital histórico 2022/001, prova 2023. Radar de publicações oficiais e central de redações com Groq. Aulas-guia e questões autorais de apoio, sem vínculo com órgãos ou bancas. Não há garantia de aprovação.'})}]}
+ ]));
 }
-if(!app.requestSingleInstanceLock()) app.quit();
-else {
-  app.on('second-instance',()=>{if(win){if(win.isMinimized())win.restore();win.show();win.focus();}});
-  app.whenReady().then(()=>{protocol.handle('study',handler);session.defaultSession.setPermissionRequestHandler((_contents,_permission,callback)=>callback(false));createWindow();});
-  app.on('window-all-closed',()=>app.quit());
+if(!app.requestSingleInstanceLock())app.quit();else{
+ app.on('second-instance',()=>{if(win){if(win.isMinimized())win.restore();win.show();win.focus();}});
+ app.whenReady().then(async()=>{await importPrevious();await importLegacy();await auth.init();if(auth.publicStatus().user)await activate();else {let local=false;try{local=JSON.parse(await fs.readFile(path.join(baseDirectory,'profile-choice.json'),'utf8')).guest===true;}catch{}if(local||process.env.PEP_QA_GUEST&&!app.isPackaged)await activate(true);else background=false;}protocol.handle('study',handler);session.defaultSession.setPermissionRequestHandler((_c,_p,cb)=>cb(false));createWindow();createTray();});
+ app.on('before-quit',()=>{quitting=true;});
+ app.on('will-quit',()=>{radar?.stop();syncer?.stop();});
+ app.on('window-all-closed',()=>{if(!background||quitting)app.quit();});
 }

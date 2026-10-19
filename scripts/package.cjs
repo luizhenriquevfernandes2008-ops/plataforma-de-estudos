@@ -9,7 +9,7 @@ const manifest = require('../package.json');
   const staging = await fs.mkdtemp(path.join(os.tmpdir(), 'plataforma-package-'));
   try {
     // Package only the runtime. Tests, source, credentials and profiles stay out.
-    for (const file of ['main.cjs', 'store.cjs', 'icon.ico', 'icon.png']) {
+    for (const file of ['main.cjs', 'store.cjs', 'central-store.cjs', 'essay-service.cjs', 'radar.cjs', 'cloud-auth.cjs', 'cloud-sync.cjs', 'icon.ico', 'icon.png']) {
       await fs.copyFile(path.join(root, file), path.join(staging, file));
     }
     await fs.cp(path.join(root, 'renderer'), path.join(staging, 'renderer'), {recursive: true});
@@ -18,12 +18,12 @@ const manifest = require('../package.json');
       description: manifest.description, author: manifest.author, license: manifest.license,
     }, null, 2));
     const paths = await packager({
-      dir: staging, out: path.join(root, 'dist'), name: 'Rumo a Prefeitura',
-      executableName: 'Rumo a Prefeitura', platform: 'win32', arch: 'x64',
+      dir: staging, out: path.join(root, 'dist'), name: 'PEP',
+      executableName: 'PEP', platform: 'win32', arch: 'x64',
       electronVersion: manifest.devDependencies.electron,
       icon: path.join(root, 'icon.ico'), asar: true, prune: false, overwrite: false,
       appVersion: manifest.version, buildVersion: manifest.version,
-      win32metadata: {FileDescription: 'Plataforma de Estudos — Curitiba', ProductName: 'Rumo à Prefeitura'},
+      win32metadata: {FileDescription: 'PEP - Plataforma de Estudos', ProductName: 'PEP'},
     });
     console.log(paths.join('\n'));
   } finally {
