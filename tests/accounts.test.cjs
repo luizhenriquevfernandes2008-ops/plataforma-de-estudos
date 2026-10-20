@@ -2,6 +2,33 @@ const {test}=require('node:test');const assert=require('node:assert/strict');con
 const {createCloudAuth,validateConfig,credentials}=require('../cloud-auth.cjs');const {createCloudSync,mergeSnapshots}=require('../cloud-sync.cjs');const {createStore,validate}=require('../store.cjs');
 const vault={isEncryptionAvailable:()=>true,encryptString:s=>Buffer.from(s.split('').reverse().join('')),decryptString:b=>b.toString().split('').reverse().join('')};
 const project={url:'https://pep-test.supabase.co',key:'sb_publishable_FAKE_FOR_TESTS_ONLY'};
+test('bundled public project works on first run without network or writing personal config',async()=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'pep-default-test-'));
+ const auth=createCloudAuth(dir,vault,()=>{throw Error('unexpected network call');},project);
+ await auth.init();assert.equal(auth.publicStatus().configured,true);assert.equal(auth.publicStatus().projectUrl,project.url);
+ assert.equal(auth.publicStatus().user,null);assert.equal(JSON.stringify(auth.publicStatus()).includes(project.key),false);
+ await assert.rejects(fs.access(path.join(dir,'cloud-config.json')));
+ const restarted=createCloudAuth(dir,vault,undefined,project);await restarted.init();assert.equal(restarted.publicStatus().configured,true);
+});
+test('custom project survives bundled defaults; corrupt config never silently switches accounts',async()=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'pep-custom-test-'));
+ const custom={...project,url:'https://custom-project.supabase.co'};
+ const auth=createCloudAuth(dir,vault,undefined,project);await auth.configure(custom);
+ const restarted=createCloudAuth(dir,vault,undefined,project);await restarted.init();assert.equal(restarted.publicStatus().projectUrl,custom.url);
+ await fs.writeFile(path.join(dir,'cloud-config.json'),'{broken');
+ const broken=createCloudAuth(dir,vault,undefined,project);await broken.init();assert.equal(broken.publicStatus().configured,false);
+ const fresh=await fs.mkdtemp(path.join(os.tmpdir(),'pep-invalid-default-test-'));
+ await assert.rejects(createCloudAuth(fresh,vault,undefined,{...project,key:'sb_secret_FAKE_FOR_TESTS_ONLY'}).init());
+});
+test('bundled project session survives restart and unconfirmed email has actionable error',async()=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'pep-default-session-test-'));
+ const session={access_token:'fake-access',refresh_token:'fake-refresh',expires_at:Math.floor(Date.now()/1000)+3600,user:{id:'22222222-2222-4222-8222-222222222222',email:'student@example.invalid'}};
+ const auth=createCloudAuth(dir,vault,async()=>new Response(JSON.stringify(session)),project);
+ await auth.init();await auth.login('student@example.invalid','fake-password');
+ const next=createCloudAuth(dir,vault,()=>{throw Error('unexpected request');},project);await next.init();assert.equal(next.profileId(),auth.profileId());
+ const unconfirmed=createCloudAuth(dir,vault,async()=>new Response(JSON.stringify({error_code:'email_not_confirmed'}),{status:400}),project);
+ await unconfirmed.init();await assert.rejects(unconfirmed.login('student@example.invalid','fake-password'),/código recebido/);
+});
 test('cloud configuration rejects privileged keys and untrusted URLs',()=>{assert.equal(validateConfig(project).url,project.url);for(const url of ['http://pep-test.supabase.co','https://evil.test','https://pep-test.supabase.co/steal','https://user:pass@pep-test.supabase.co'])assert.throws(()=>validateConfig({...project,url}));const service='x.'+Buffer.from(JSON.stringify({role:'service_role'})).toString('base64url')+'.x';assert.throws(()=>validateConfig({...project,key:service}));assert.throws(()=>credentials('not-email','short'));});
 test('account sessions survive restart encrypted; passwords and tokens stay out of status',async()=>{const dir=await fs.mkdtemp(path.join(os.tmpdir(),'pep-auth-test-'));const session={access_token:'test-access',refresh_token:'test-refresh',expires_at:Math.floor(Date.now()/1000)+3600,user:{id:'11111111-1111-4111-8111-111111111111',email:'student@example.invalid'}};const calls=[];const fetcher=async(url,options)=>{calls.push(url);assert.equal(options.redirect,'error');return new Response(JSON.stringify(url.includes('/logout')?{}:session),{status:200});};const auth=createCloudAuth(dir,vault,fetcher);await auth.configure(project);await auth.login('student@example.invalid','test-pass-123');const status=auth.publicStatus();assert.equal(status.user.email,session.user.email);assert.equal(JSON.stringify(status).includes('test-access'),false);const persisted=await fs.readFile(path.join(dir,'cloud-session.enc'),'utf8');assert.equal(persisted.includes('test-access'),false);assert.equal(persisted.includes('test-pass'),false);const next=createCloudAuth(dir,vault,fetcher);await next.init();assert.equal(next.profileId(),auth.profileId());await assert.rejects(next.configure(project),/Saia/);await next.logout();assert.equal(next.publicStatus().user,null);const again=createCloudAuth(dir,vault,fetcher);await again.init();assert.equal(again.publicStatus().user,null);});
 test('three-way merge combines independent records and reports same-record conflicts',()=>{const base={curitiba:{note:{text:'base'},'lesson:e01':{done:false}}};const local={curitiba:{note:{text:'local'},'lesson:e01':{done:false}}};const remote={curitiba:{note:{text:'base'},'lesson:e01':{done:true}}};let m=mergeSnapshots(base,local,remote);assert.equal(m.conflicts.length,0);assert.equal(m.merged.curitiba.note.text,'local');assert.equal(m.merged.curitiba['lesson:e01'].done,true);remote.curitiba.note.text='remote';m=mergeSnapshots(base,local,remote);assert.equal(m.conflicts.length,1);assert.equal(m.conflicts[0].remote.text,'remote');assert.equal(mergeSnapshots(base,local,remote,{'curitiba/note':'remote'}).merged.curitiba.note.text,'remote');});

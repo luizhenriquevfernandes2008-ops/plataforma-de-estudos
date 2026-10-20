@@ -16,12 +16,15 @@ function credentials(email, password) {
   if (typeof password !== 'string' || password.length < 8 || password.length > 128) throw Error('Use uma senha de 8 a 128 caracteres.');
   return {email: email.trim().toLowerCase(), password};
 }
-function createCloudAuth(directory, safeStorage, fetcher = fetch) {
+function createCloudAuth(directory, safeStorage, fetcher = fetch, defaults = null) {
   const configFile = path.join(directory, 'cloud-config.json');
   const sessionFile = path.join(directory, 'cloud-session.enc');
   let config = null, session = null, refreshing = null, offline = false;
   async function init() {
-    try { config = validateConfig(JSON.parse(await fs.readFile(configFile, 'utf8'))); } catch {}
+    // A previously selected project keeps its users and sessions. Never silently
+    // switch an unreadable custom configuration to a different project's cloud.
+    try { config = validateConfig(JSON.parse(await fs.readFile(configFile, 'utf8'))); }
+    catch (error) { if (error.code === 'ENOENT' && defaults) config = validateConfig(defaults); }
     if (!config || !safeStorage.isEncryptionAvailable()) return;
     try {
       const data = JSON.parse(safeStorage.decryptString(await fs.readFile(sessionFile)));
@@ -43,7 +46,7 @@ function createCloudAuth(directory, safeStorage, fetcher = fetch) {
     catch { throw Error('Sem conexão com o serviço de contas. Seus dados locais foram preservados.'); }
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const error = Error(response.status === 429 ? 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.' : data.code === 'email_not_confirmed' ? 'Confirme seu e-mail pelo link recebido antes de entrar.' : route.startsWith('/token') ? 'E-mail ou senha não conferem, ou a sessão expirou. Entre novamente.' : 'O serviço não aceitou a operação. Confira os dados, a confirmação de e-mail e a configuração do projeto.');
+      const error = Error(response.status === 429 ? 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.' : (data.error_code || data.code) === 'email_not_confirmed' ? 'Confirme seu e-mail com o código recebido antes de entrar.' : route.startsWith('/token') ? 'E-mail ou senha não conferem, ou a sessão expirou. Entre novamente.' : 'O serviço não aceitou a operação. Confira os dados, a confirmação de e-mail e a configuração do projeto.');
       error.status = response.status; throw error;
     }
     return data;

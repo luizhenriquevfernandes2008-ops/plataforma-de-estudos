@@ -9,7 +9,7 @@ const manifest = require('../package.json');
   const staging = await fs.mkdtemp(path.join(os.tmpdir(), 'plataforma-package-'));
   try {
     // Package only the runtime. Tests, source, credentials and profiles stay out.
-    for (const file of ['main.cjs', 'store.cjs', 'central-store.cjs', 'essay-service.cjs', 'radar.cjs', 'cloud-auth.cjs', 'cloud-sync.cjs', 'icon.ico', 'icon.png']) {
+    for (const file of ['main.cjs', 'store.cjs', 'central-store.cjs', 'essay-service.cjs', 'radar.cjs', 'cloud-auth.cjs', 'cloud-defaults.json', 'cloud-sync.cjs', 'icon.ico', 'icon.png']) {
       await fs.copyFile(path.join(root, file), path.join(staging, file));
     }
     await fs.cp(path.join(root, 'renderer'), path.join(staging, 'renderer'), {recursive: true});

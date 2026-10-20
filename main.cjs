@@ -13,7 +13,7 @@ app.setPath('userData',(!app.isPackaged&&process.env.PEP_QA_DIR)||path.join(app.
 protocol.registerSchemesAsPrivileged([{scheme:'study',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true,stream:true}}]);
 const ids=['curitiba','bb-comercial','bb-tecnologia'];
 const baseDirectory=app.getPath('userData');
-const auth=createCloudAuth(baseDirectory,safeStorage);
+const auth=createCloudAuth(baseDirectory,safeStorage,fetch,require('./cloud-defaults.json'));
 let stores,preferences,central,essays,radar,syncer=null,profile=null,profileDirectory=baseDirectory,switching=false,activeWrites=0,accountBusy=false;
 function setStores(directory){profileDirectory=directory;stores=Object.fromEntries(ids.map(id=>[id,createStore(path.join(directory,id))]));preferences=createStore(path.join(directory,'preferencias'));central=createStore(path.join(directory,'central'),validateCentral);essays=createEssayService(directory,safeStorage);}
 setStores(baseDirectory);
@@ -147,7 +147,7 @@ function createWindow(){
  {label:'Arquivo',submenu:[{label:'Salvar backup de todos os cursos…',accelerator:'CmdOrCtrl+Shift+S',click:backup},{label:'Restaurar backup…',click:restore},{label:'Pasta do progresso',click:()=>shell.openPath(profileDirectory)},{type:'separator'},{label:'Imprimir página…',accelerator:'CmdOrCtrl+P',click:()=>win.webContents.print({printBackground:true})},{label:'Sair',role:'quit'}]},
  {label:'Editar',submenu:[{label:'Desfazer',role:'undo'},{label:'Refazer',role:'redo'},{type:'separator'},{label:'Recortar',role:'cut'},{label:'Copiar',role:'copy'},{label:'Colar',role:'paste'},{label:'Selecionar tudo',role:'selectAll'}]},
  {label:'Exibir',submenu:[{label:'Recarregar',role:'reload'},{label:'Tamanho original',role:'resetZoom'},{label:'Aumentar',role:'zoomIn'},{label:'Diminuir',role:'zoomOut'},{label:'Tela inteira',role:'togglefullscreen'}]},
- {label:'Ajuda',submenu:[{label:'Como estudar',click:()=>dialog.showMessageBox(win,{message:'Uma hora por dia.',detail:'10 min de revisão, 25 min de aula, 20 min de questões e 5 min de caderno. Escolha uma trilha por sessão. O progresso dos cursos é separado.\n\nConteúdo e progresso funcionam offline. Fontes e livros externos precisam de internet. Salve um backup semanal pelo menu Arquivo.'})},{label:'Sobre PEP',click:()=>dialog.showMessageBox(win,{message:'PEP · 2.2.0 · Versão de testes',detail:'Curitiba: Agente Administrativo. Banco do Brasil: Agente Comercial e Agente de Tecnologia.\n\nBB usa edital histórico 2022/001, prova 2023. Radar de publicações oficiais e central de redações com Groq. Aulas-guia e questões autorais de apoio, sem vínculo com órgãos ou bancas. Não há garantia de aprovação.'})}]}
+ {label:'Ajuda',submenu:[{label:'Como estudar',click:()=>dialog.showMessageBox(win,{message:'Uma hora por dia.',detail:'10 min de revisão, 25 min de aula, 20 min de questões e 5 min de caderno. Escolha uma trilha por sessão. O progresso dos cursos é separado.\n\nConteúdo e progresso funcionam offline. Fontes e livros externos precisam de internet. Salve um backup semanal pelo menu Arquivo.'})},{label:'Sobre PEP',click:()=>dialog.showMessageBox(win,{message:'PEP · 2.2.1 · Versão de testes',detail:'Curitiba: Agente Administrativo. Banco do Brasil: Agente Comercial e Agente de Tecnologia.\n\nBB usa edital histórico 2022/001, prova 2023. Radar de publicações oficiais e central de redações com Groq. Aulas-guia e questões autorais de apoio, sem vínculo com órgãos ou bancas. Não há garantia de aprovação.'})}]}
  ]));
 }
 if(!app.requestSingleInstanceLock())app.quit();else{

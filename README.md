@@ -1,6 +1,6 @@
 # PEP — Plataforma de Estudos
 
-Aplicativo de estudos para Windows, versão **2.2.0**. Cursos offline, central de redações, radar de concursos e integração de contas com Supabase.
+Aplicativo de estudos para Windows, versão **2.2.1**. Cursos offline, central de redações, radar de concursos e integração de contas com Supabase.
 
 ![Tela inicial de contas](docs/login.png)
 
@@ -23,7 +23,7 @@ Curitiba: Edital 4/2026, com link para a versão retificada em 15/10/2026, consu
 - **Radar:** consulta fontes oficiais, detecta novas publicações após uma consulta inicial, organiza etapas e envia lembretes enquanto o app está aberto ou na bandeja. ENEM e autorizações federais são fontes opcionais. Não cobre todos os concursos nem atualiza automaticamente prazos da agenda.
 - **Contas:** cadastro, login, confirmação por e-mail, recuperação por código, sessão protegida e progresso separado por usuário. Sincronização com cópia local e tratamento explícito de conflitos.
 
-**A nuvem ainda precisa ser ativada em um projeto seu.** A entrega não inclui projeto Supabase ou serviço de e-mail configurados. Sem essa configuração, use **Abrir meu perfil local antigo**. Veja [Configurar nuvem](docs/CONFIGURAR-NUVEM.md) e execute [o SQL](supabase/setup.sql) no projeto. A mesma conta funciona em outros computadores Windows com a PEP e o mesmo projeto configurado.
+**A PEP já inclui a conexão pública ao projeto de contas.** Abra o app, escolha **Criar uma conta** e confirme o código recebido por e-mail. Em outro computador Windows, use a mesma versão e conta. O perfil local antigo continua disponível. O arquivo `cloud-defaults.json` contém somente a URL e a chave pública publishable; nenhuma senha ou chave administrativa é distribuída. Uma configuração personalizada existente é preservada. Para administrar ou usar outro projeto, veja [Configurar nuvem](docs/CONFIGURAR-NUVEM.md).
 
 ![Central de redações](docs/redacoes.png)
 
@@ -65,6 +65,6 @@ O radar exige internet para consultar fontes; os cursos e a revisão por regras 
 
 Testes automatizados cobrem conteúdo, gravação, isolamento, correção estruturada, chaves, limites de API, extração de publicações, sessões e conflitos. A interface foi exercitada no Electron, incluindo backup e navegação. As cinco fontes do radar responderam à consulta de 19/10/2026.
 
-Groq e Supabase foram testados com respostas simuladas. **Não houve correção real com chave Groq nem implantação/validação do banco Supabase real nesta entrega.** Confirmação e recuperação de e-mail dependem do SMTP e dos templates do projeto. Veja [o estado da versão](docs/STATUS.md).
+O projeto Supabase real aceitou a chave pública e informou cadastro por e-mail habilitado com confirmação obrigatória; a leitura de progresso sem login foi negada (HTTP 401). O proprietário executou o SQL e configurou SMTP/templates. **Recebimento real de e-mails, isolamento entre duas contas autenticadas e sincronização entre computadores físicos ainda precisam de teste.** As verificações automatizadas de contas usam respostas simuladas; Groq também não foi testado com chave real. Veja [o estado da versão](docs/STATUS.md).
 
 Principais módulos: `main.cjs` (desktop/API local), `essay-service.cjs` (revisão), `radar.cjs` (fontes), `cloud-auth.cjs` (contas), `cloud-sync.cjs` (sincronização), `src/account-ui.tsx`, `src/writing-studio.tsx`, `src/radar-view.tsx` e `src/course-room.tsx`. Os arquivos antigos de interface foram preservados como referência.

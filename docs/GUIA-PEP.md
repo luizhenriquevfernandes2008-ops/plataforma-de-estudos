@@ -1,10 +1,10 @@
-# PEP 2.2 — guia de uso
+# PEP 2.2.1 — guia de uso
 
 Abra `PEP.exe` dentro da pasta completa do aplicativo. Na Área de Trabalho, use a pasta **PEP - Meus testes** e o atalho **Abrir PEP - Nova versao**. As versões antigas continuam guardadas.
 
 ## Entrar e estudar
 
-Na tela de login, abra o perfil local antigo para continuar imediatamente. Para contas entre computadores, siga [Configurar nuvem](CONFIGURAR-NUVEM.md). O projeto Supabase ainda precisa ser criado e conectado pelo proprietário.
+Na tela de login, escolha **Criar uma conta**, informe e-mail e senha e digite o código recebido por e-mail. A conexão com a nuvem já está incluída. Em outro computador Windows, instale esta versão e entre com a mesma conta. Para continuar sem conta, escolha **Abrir meu perfil local antigo**. Se o app abrir direto nesse perfil, use **Minha conta → Entrar em outra conta**.
 
 Depois da entrada, a vinheta PEP dá acesso a Curitiba e Banco do Brasil. No BB, escolha Agente Comercial ou Agente de Tecnologia. Cada trilha guarda seu progresso. Use o botão de tema para alternar claro/escuro e o alto-falante para desativar a vinheta. O app abre em tela cheia; **Esc** sai e **F11** alterna.
 
