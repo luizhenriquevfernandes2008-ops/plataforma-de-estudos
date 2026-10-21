@@ -1,12 +1,24 @@
-# PEP 2.3.0 — guia de uso
+# PEP 2.4.0 — guia de uso
 
-Instale `PEP-Setup-2.3.0-x64.exe` e abra o atalho PEP. Na Área de Trabalho, use a pasta **PEP - Meus testes** e o atalho **Abrir PEP - Nova versao**. As versões antigas continuam guardadas.
+Instale `PEP-Setup-2.4.0-x64.exe` e abra o atalho PEP. Na Área de Trabalho, use a pasta **PEP - Meus testes** e o atalho **Abrir PEP - Nova versao**. As versões antigas continuam guardadas.
 
 ## Entrar e estudar
 
 Na tela de login, escolha **Criar uma conta**, informe e-mail e senha e digite o código recebido por e-mail. A conexão com a nuvem já está incluída. Em outro computador Windows, instale esta versão e entre com a mesma conta. Para continuar sem conta, escolha **Abrir meu perfil local antigo**. Se o app abrir direto nesse perfil, use **Minha conta → Entrar em outra conta**.
 
-Depois da entrada, a vinheta PEP dá acesso a Curitiba e Banco do Brasil. No BB, escolha Agente Comercial ou Agente de Tecnologia. Cada trilha guarda seu progresso. Use o botão de tema para alternar claro/escuro e o alto-falante para desativar a vinheta. O app abre em tela cheia; **Esc** sai e **F11** alterna.
+Depois da entrada, a vinheta PEP dá acesso a Curitiba e Banco do Brasil. No BB, escolha Agente Comercial ou Agente de Tecnologia. Cada trilha guarda seu progresso. Use **Configurações** no cabeçalho para escolher o tema, a fonte e o som da abertura. O app abre em tela cheia; **Esc** sai e **F11** alterna.
+
+## Configurações
+
+O botão **Configurações** fica no cabeçalho da escolha de cursos e das áreas de estudo, redações e radar. As opções salvam imediatamente no perfil aberto. Para contas, elas também acompanham o progresso sincronizado; no perfil local ficam neste computador.
+
+- **Aparência:** cinco cores (verde, rosa, lilás, azul e âmbar), combinadas com claro ou escuro.
+- **Leitura:** fonte do sistema, Arial, Verdana, Georgia ou Consolas; tamanho padrão, grande ou muito grande para o conteúdo; espaçamento maior entre linhas.
+- **Dopamina:** habilita XP, níveis, conquistas, missões e celebrações. Desative para estudar sem esses estímulos. O progresso permanece e reaparece ao reativar.
+- **Reduzir movimentos:** remove animações e transições, inclusive da abertura. A preferência equivalente do Windows também é respeitada.
+- **Som da abertura:** liga/desliga a vinheta. Para notificações, use **Configurar avisos de concursos**, que abre o Radar.
+
+Em Meu estudo, as missões sugerem cinco questões, uma aula e um cartão. Os pontos valorizam atividades diferentes: 5 por questão, 20 por aula concluída, 3 por cartão revisado, 15 por dia de estudo registrado e 20 por dia com simulado. Não existe punição por faltar. Desmarcar uma aula ajusta o total; responder a mesma questão várias vezes não acumula XP extra. XP não representa nota na prova.
 
 ## Estudos próprios
 
@@ -18,7 +30,7 @@ Nas questões, confira sua alternativa, o gabarito e a justificativa. As 80 nova
 
 ## Atualizações
 
-Instale a versão 2.3.0 uma vez para habilitar atualizações futuras. Versões antigas em ZIP não adquirem essa função sozinhas. A PEP verifica versões após 20 segundos aberta e a cada quatro horas; também existe **Atualizações** no canto inferior e no menu Ajuda. A consulta manual tem intervalo mínimo de um minuto.
+Instale a versão 2.4.0 uma vez para habilitar atualizações futuras. Versões antigas em ZIP não adquirem essa função sozinhas. A PEP verifica versões após 20 segundos aberta e a cada quatro horas; também existe **Atualizações** no canto inferior e no menu Ajuda. A consulta manual tem intervalo mínimo de um minuto.
 
 O download ocorre em segundo plano. Quando estiver pronto, você pode continuar estudando ou selecionar **Reiniciar e atualizar**. Textos não salvos, simulado em andamento e gravações pendentes bloqueiam o reinício. Ao usar **Sair completamente** na bandeja, uma atualização já baixada também é instalada; fechar apenas a janela pode deixar o app na bandeja. Não há atualização com o app encerrado. Seus dados ficam fora da pasta do programa.
 

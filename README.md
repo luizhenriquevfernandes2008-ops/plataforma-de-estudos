@@ -1,6 +1,6 @@
 # PEP — Plataforma de Estudos
 
-Aplicativo de estudos para Windows, versão **2.3.0**. Cursos offline, central de redações, radar de concursos e integração de contas com Supabase.
+Aplicativo de estudos para Windows, versão **2.4.0**. Cursos offline, central de redações, radar de concursos e integração de contas com Supabase.
 
 ![Tela inicial de contas](docs/login.png)
 
@@ -15,6 +15,14 @@ Aplicativo de estudos para Windows, versão **2.3.0**. Cursos offline, central d
 Inclui plano de 1 hora por dia, matérias, questões comentadas, simulados, cartões de memória, resumos, biblioteca de fontes, anotações, temas claro/escuro e abertura PEP com som original.
 
 Curitiba: Edital 4/2026, com link para a versão retificada em 15/10/2026, consultada em 19/10/2026. BB: preparação antecipada baseada no edital histórico 2022/001 e provas de 2023. O app não presume um novo edital ou data de nova prova. Questões são autorais de apoio; provas oficiais e livros externos são links.
+
+## Configurações e motivação
+
+Abra **Configurações** no cabeçalho. Escolha verde, rosa, lilás, azul ou âmbar, em modo claro ou escuro; fonte do sistema, Arial, Verdana, Georgia ou Consolas; três tamanhos de leitura e maior espaço entre linhas. Som da abertura e redução de movimentos também ficam nessa área, com acesso aos avisos do Radar. Preferências pertencem ao perfil e entram no backup e na sincronização.
+
+A opção **Dopamina** liga/desliga XP, níveis, conquistas, missões curtas e celebrações. Desligar esconde esses estímulos sem apagar o progresso nem impedir estudos. XP é calculado a partir das atividades salvas; repetir a mesma questão não soma pontos extras. Não há punição por faltar um dia, ranking de alunos ou recompensa aleatória. A redução de movimentos do Windows é respeitada.
+
+![Configurações no tema rosa](docs/configuracoes-rosa.png)
 
 ## Estudos próprios e apostila resumida
 
@@ -35,7 +43,7 @@ Curitiba agora tem **120 questões de Conhecimentos Específicos**, o triplo das
 
 ## Usar no Windows
 
-Baixe `PEP-Setup-2.3.0-x64.exe` na página de [releases](https://github.com/luizhenriquevfernandes2008-ops/plataforma-de-estudos/releases/latest) e instale. Quem usa o ZIP antigo precisa instalar esta versão uma vez. Depois, a PEP procura novas versões, baixa em segundo plano e instala ao sair completamente ou pelo botão **Reiniciar e atualizar**. Fechar para a bandeja não encerra o aplicativo. Dados e contas anteriores são preservados. Distribuição Windows x64 sem assinatura digital.
+Baixe `PEP-Setup-2.4.0-x64.exe` na página de [releases](https://github.com/luizhenriquevfernandes2008-ops/plataforma-de-estudos/releases/latest) e instale. Quem usa o ZIP antigo precisa instalar esta versão uma vez. Depois, a PEP procura novas versões, baixa em segundo plano e instala ao sair completamente ou pelo botão **Reiniciar e atualizar**. Fechar para a bandeja não encerra o aplicativo. Dados e contas anteriores são preservados. Distribuição Windows x64 sem assinatura digital.
 
 O app inicia em tela cheia. **Esc** sai e **F11** alterna. **Alt** mostra o menu para exportar/importar backup. Consulte o [guia de uso](docs/GUIA-PEP.md).
 

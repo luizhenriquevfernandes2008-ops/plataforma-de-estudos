@@ -1,7 +1,7 @@
 {
   "name": "pep-estudos",
   "productName": "PEP",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "PEP: cursos offline, central de redações com Groq, radar de concursos e agenda no Windows.",
   "author": "Plataforma de Estudos",
   "private": true,
