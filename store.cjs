@@ -1,5 +1,6 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const {validateLearning}=require('./learning-validation.cjs');
 const validKey = /^(note|essay|settings:theme|settings:sound|lesson:[a-z][a-z0-9-]{1,24}|answer:q\d{1,4}|card:[a-z][a-z0-9-]{1,24}|session:\d{4}-\d{2}-\d{2}|sim:[a-zA-Z0-9-]{1,50})$/;
 function validate(records) {
   if (!records || typeof records !== 'object' || Array.isArray(records)) throw new Error('Arquivo de progresso inválido.');
@@ -8,12 +9,14 @@ function validate(records) {
     const finite=n=>typeof n==='number'&&Number.isFinite(n);
     const date=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&Number.isFinite(Date.parse(d));
     const valid=key==='lesson:diagnostic'?value.done===true&&value.version===1&&Number.isInteger(value.minutes)&&value.minutes>=15&&value.minutes<=180&&value.levels&&typeof value.levels==='object'&&!Array.isArray(value.levels)&&Object.keys(value.levels).length<=20&&Object.entries(value.levels).every(([k,v])=>/^[a-z]{2,8}$/.test(k)&&Number.isInteger(v)&&v>=0&&v<=3)&&Array.isArray(value.weakLessons)&&value.weakLessons.length<=100&&value.weakLessons.every(v=>typeof v==='string'&&/^[a-z][a-z0-9-]{1,24}$/.test(v))&&Array.isArray(value.difficulties)&&value.difficulties.length<=6&&value.difficulties.every(v=>['conteudo','interpretacao','memoria','calculo','tempo','rotina'].includes(v)):
-      key==='settings:sound'?typeof value.enabled==='boolean':key==='essay'?typeof value.text==='string'&&value.text.length<=20000&&typeof value.topic==='string':key==='settings:theme'?['light','dark'].includes(value.mode)&&(!('palette'in value)||['forest','rose','violet','ocean','amber'].includes(value.palette))&&(!('font'in value)||['system','arial','verdana','georgia','mono'].includes(value.font))&&(!('textSize'in value)||['normal','large','larger'].includes(value.textSize))&&['spacious','reducedMotion','dopamine'].every(k=>!(k in value)||typeof value[k]==='boolean'):key==='note'?typeof value.text==='string'&&value.text.length<=20000:
+      key==='settings:sound'?typeof value.enabled==='boolean':key==='essay'?typeof value.text==='string'&&value.text.length<=20000&&typeof value.topic==='string':key==='settings:theme'?['light','dark'].includes(value.mode)&&(!('palette'in value)||['forest','rose','violet','ocean','amber'].includes(value.palette))&&(!('font'in value)||['system','arial','verdana','georgia','mono'].includes(value.font))&&(!('textSize'in value)||['normal','large','larger'].includes(value.textSize))&&['spacious','reducedMotion','dopamine','xp','missions','animations','rewardSound','garden'].every(k=>!(k in value)||typeof value[k]==='boolean'):key==='note'?typeof value.text==='string'&&value.text.length<=20000:
       key.startsWith('lesson:')?typeof value.done==='boolean':
       key.startsWith('answer:')?typeof value.correct==='boolean'&&Number.isInteger(value.selected)&&value.selected>=0&&value.selected<5:
       key.startsWith('card:')?date(value.due)&&Number.isInteger(value.level)&&value.level>=0&&value.level<=4:
       key.startsWith('session:')?finite(value.minutes)&&value.minutes>=0&&value.minutes<=480:
       key.startsWith('sim:')?date(value.date)&&finite(value.count)&&value.count>0&&value.count<=70&&finite(value.correct)&&value.correct>=0&&value.correct<=value.count&&finite(value.percent)&&value.percent>=0&&value.percent<=100:false;
+    validateLearning(key,value);
+    if(key.startsWith('sim:')&&value.seconds!==undefined&&(!value.seconds||Array.isArray(value.seconds)||typeof value.seconds!=='object'||Object.entries(value.seconds).some(([id,n])=>!(/^(q\d{1,4}|essay)$/.test(id))||!finite(n)||n<0||n>86400)))throw Error('Tempos do simulado inválidos.');
     if(!valid)throw new Error('Conteúdo inválido no registro '+key+'.');
   }
   return records;

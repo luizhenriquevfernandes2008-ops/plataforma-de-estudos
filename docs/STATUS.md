@@ -1,4 +1,6 @@
-# Estado da versão 2.4.0 — 21/10/2026
+# Estado da versão 2.5.0 — 21/10/2026
+
+As 15 melhorias desta entrega estão descritas em [Novidades 2.5](NOVIDADES-2.5.md). A edição continua exclusiva para Windows.
 
 ## Concluído
 
@@ -18,7 +20,7 @@
 ## Verificado
 
 - TypeScript sem erros e build de produção.
-- 33 testes automatizados: persistência, conteúdo, isolamento, revisão, autenticação, proteção da sessão, mesclagem, conflitos e falhas de rede.
+- 40 testes automatizados: persistência, conteúdo, isolamento, revisão, autenticação, proteção da sessão, mesclagem, conflitos e falhas de rede.
 - Interface Electron: tela cheia e áudio, revisão local, sugestões e desfazer, históricos independentes, proteção da chave pelo Windows, agenda, tema, navegação sem perder anotações, bandeja e backup v4.
 - Contas na interface com provedor simulado: bloqueio antes do login, troca A → B → A, isolamento e recebimento de progresso de outro dispositivo.
 - Consulta real das cinco fontes do radar em 19/10/2026. Fontes externas podem mudar depois dessa verificação.
@@ -28,6 +30,8 @@
 
 - Interface 2.4: rosa claro/escuro, fonte Georgia, leitura ampliada, persistência após recarga, celebração após gravação, Dopamina desligada sem perda de respostas e mudança de tema preservando rascunho.
 - Testes adicionais: preferências antigas compatíveis, valores inválidos rejeitados, isolamento por perfil e XP sem duplicação por repetição.
+
+- Interface 2.5 exercitada em perfil isolado: diagnóstico objetivo, plano de 15 minutos, cinco alternativas comentadas, classificação de erros, revisão com reagendamento, anotações/cartões, aula em etapas, busca, sessão no calendário, recuperação de texto, tempo e marcações do simulado, comparação de redações e controles de motivação.
 
 ## Ativação externa pendente
 

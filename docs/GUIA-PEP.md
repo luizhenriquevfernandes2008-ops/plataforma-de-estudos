@@ -1,6 +1,8 @@
-# PEP 2.4.0 — guia de uso
+# PEP 2.5.0 — guia de uso
 
-Instale `PEP-Setup-2.4.0-x64.exe` e abra o atalho PEP. Na Área de Trabalho, use a pasta **PEP - Meus testes** e o atalho **Abrir PEP - Nova versao**. As versões antigas continuam guardadas.
+Instale `PEP-Setup-2.5.0-x64.exe` e abra o atalho PEP. Na Área de Trabalho, use a pasta **PEP - Meus testes** e o atalho **Abrir PEP - Nova versao**. As versões antigas continuam guardadas.
+
+Consulte [Novidades 2.5](NOVIDADES-2.5.md) para diagnóstico por questões, revisões, plano adaptativo, erros, anotações, modo prova e evolução de redações. Use **Ferramentas** no cabeçalho para busca global, calendário, recuperação e novidades.
 
 ## Entrar e estudar
 
@@ -30,7 +32,7 @@ Nas questões, confira sua alternativa, o gabarito e a justificativa. As 80 nova
 
 ## Atualizações
 
-Instale a versão 2.4.0 uma vez para habilitar atualizações futuras. Versões antigas em ZIP não adquirem essa função sozinhas. A PEP verifica versões após 20 segundos aberta e a cada quatro horas; também existe **Atualizações** no canto inferior e no menu Ajuda. A consulta manual tem intervalo mínimo de um minuto.
+Instale a versão 2.5.0 uma vez para habilitar atualizações futuras. Versões antigas em ZIP não adquirem essa função sozinhas. A PEP verifica versões após 20 segundos aberta e a cada quatro horas; também existe **Atualizações** no canto inferior e no menu Ajuda. A consulta manual tem intervalo mínimo de um minuto.
 
 O download ocorre em segundo plano. Quando estiver pronto, você pode continuar estudando ou selecionar **Reiniciar e atualizar**. Textos não salvos, simulado em andamento e gravações pendentes bloqueiam o reinício. Ao usar **Sair completamente** na bandeja, uma atualização já baixada também é instalada; fechar apenas a janela pode deixar o app na bandeja. Não há atualização com o app encerrado. Seus dados ficam fora da pasta do programa.
 

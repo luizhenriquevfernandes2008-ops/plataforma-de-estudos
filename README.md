@@ -1,8 +1,16 @@
 # PEP — Plataforma de Estudos
 
-Aplicativo de estudos para Windows, versão **2.4.0**. Cursos offline, central de redações, radar de concursos e integração de contas com Supabase.
+Aplicativo de estudos para Windows, versão **2.5.0**. Cursos offline, central de redações, radar de concursos e integração de contas com Supabase.
 
 ![Tela inicial de contas](docs/login.png)
+
+## Novidades 2.5
+
+Diagnóstico por questões, revisões espaçadas, erros por motivo, plano adaptativo de 15/30/60 minutos, busca global, modo prova, tempo por questão, evolução de redações, aulas em etapas, anotações vinculadas e cartões próprios. **Ferramentas** reúne Busca, Calendário, Recuperação e Novidades. A motivação tem controles independentes e um jardim sem perda por ausência.
+
+Veja [as 15 melhorias e como usar](docs/NOVIDADES-2.5.md). Esta entrega continua exclusiva para Windows.
+
+![Diagnóstico por questões](docs/diagnostico-2.5.png)
 
 ## Cursos
 
@@ -43,7 +51,7 @@ Curitiba agora tem **120 questões de Conhecimentos Específicos**, o triplo das
 
 ## Usar no Windows
 
-Baixe `PEP-Setup-2.4.0-x64.exe` na página de [releases](https://github.com/luizhenriquevfernandes2008-ops/plataforma-de-estudos/releases/latest) e instale. Quem usa o ZIP antigo precisa instalar esta versão uma vez. Depois, a PEP procura novas versões, baixa em segundo plano e instala ao sair completamente ou pelo botão **Reiniciar e atualizar**. Fechar para a bandeja não encerra o aplicativo. Dados e contas anteriores são preservados. Distribuição Windows x64 sem assinatura digital.
+Baixe `PEP-Setup-2.5.0-x64.exe` na página de [releases](https://github.com/luizhenriquevfernandes2008-ops/plataforma-de-estudos/releases/latest) e instale. Quem usa o ZIP antigo precisa instalar esta versão uma vez. Depois, a PEP procura novas versões, baixa em segundo plano e instala ao sair completamente ou pelo botão **Reiniciar e atualizar**. Fechar para a bandeja não encerra o aplicativo. Dados e contas anteriores são preservados. Distribuição Windows x64 sem assinatura digital.
 
 O app inicia em tela cheia. **Esc** sai e **F11** alterna. **Alt** mostra o menu para exportar/importar backup. Consulte o [guia de uso](docs/GUIA-PEP.md).
 

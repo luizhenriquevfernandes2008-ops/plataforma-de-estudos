@@ -10,8 +10,9 @@ export function priorities(course:Course,records:Records){
   const weak=profile?.weakLessons.includes(lesson.id)||false;
   const completed=!!records['lesson:'+lesson.id]?.done;
   const subject=course.subjects.find(s=>s.id===lesson.subject);
-  const score=(3-level)*12+(weak?30:0)+(errors?25+35*errors/practiced.length:0)+(completed?0:8)+(subject?.points||0)/10;
-  const reasons=[errors?`${errors} erro(s) em ${practiced.length} questão(ões) praticada(s)`:'',weak?'Você marcou este assunto como difícil':'',level<2?'Base informada: '+(level===0?'começando agora':'iniciante'):'',!completed?'Aula ainda não concluída':''].filter(Boolean);
+  const measured=records['lesson:assessment']?.subjects?.find((s:any)=>s.id===lesson.subject);
+  const score=(measured?.total?40*(1-measured.correct/measured.total):0)+(3-level)*12+(weak?30:0)+(errors?25+35*errors/practiced.length:0)+(completed?0:8)+(subject?.points||0)/10;
+  const reasons=[measured?.total?`Diagnóstico: ${measured.correct}/${measured.total} nesta matéria`:'',errors?`${errors} erro(s) em ${practiced.length} questão(ões) praticada(s)`:'',weak?'Você marcou este assunto como difícil':'',level<2?'Base informada: '+(level===0?'começando agora':'iniciante'):'',!completed?'Aula ainda não concluída':''].filter(Boolean);
   return {lesson,score,reasons,errors,practiced:practiced.length,completed,order};
  }).sort((a,b)=>b.score-a.score||a.order-b.order);
 }

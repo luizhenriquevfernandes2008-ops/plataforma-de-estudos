@@ -5,7 +5,7 @@
   "asar": true,
   "npmRebuild": false,
   "files": [
-    "main.cjs", "store.cjs", "central-store.cjs", "essay-service.cjs",
+    "main.cjs", "learning-validation.cjs", "recovery.cjs", "store.cjs", "central-store.cjs", "essay-service.cjs",
     "radar.cjs", "cloud-auth.cjs", "cloud-defaults.json", "cloud-sync.cjs",
     "updater.cjs", "icon.ico", "icon.png", "renderer/**/*"
   ],

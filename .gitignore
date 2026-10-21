@@ -28,3 +28,6 @@ cloud-config.json
 sync-state.json*
 perfis/
 profile-choice.json
+
+backups-automaticos/
+diagnostic-seen.json
