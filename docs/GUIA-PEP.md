@@ -1,12 +1,26 @@
-# PEP 2.2.1 — guia de uso
+# PEP 2.3.0 — guia de uso
 
-Abra `PEP.exe` dentro da pasta completa do aplicativo. Na Área de Trabalho, use a pasta **PEP - Meus testes** e o atalho **Abrir PEP - Nova versao**. As versões antigas continuam guardadas.
+Instale `PEP-Setup-2.3.0-x64.exe` e abra o atalho PEP. Na Área de Trabalho, use a pasta **PEP - Meus testes** e o atalho **Abrir PEP - Nova versao**. As versões antigas continuam guardadas.
 
 ## Entrar e estudar
 
 Na tela de login, escolha **Criar uma conta**, informe e-mail e senha e digite o código recebido por e-mail. A conexão com a nuvem já está incluída. Em outro computador Windows, instale esta versão e entre com a mesma conta. Para continuar sem conta, escolha **Abrir meu perfil local antigo**. Se o app abrir direto nesse perfil, use **Minha conta → Entrar em outra conta**.
 
 Depois da entrada, a vinheta PEP dá acesso a Curitiba e Banco do Brasil. No BB, escolha Agente Comercial ou Agente de Tecnologia. Cada trilha guarda seu progresso. Use o botão de tema para alternar claro/escuro e o alto-falante para desativar a vinheta. O app abre em tela cheia; **Esc** sai e **F11** alterna.
+
+## Estudos próprios
+
+Ao entrar em cada curso pela primeira vez neste computador, responda ao diagnóstico de três etapas: nível por matéria, dificuldades/tempo disponível e assuntos mais difíceis. Mesmo uma conta existente confirma essas respostas em um computador novo. Cada curso possui seu próprio diagnóstico. **Responder depois** deixa a avaliação pendente para a próxima entrada.
+
+A aba **Estudos próprios** divide seu tempo diário, explica por que cada assunto recebeu prioridade e oferece treino de dez questões. Seus erros mais recentes recebem preferência; o plano muda com suas respostas e aulas concluídas. Use **Ajustar diagnóstico** para atualizar os dados. Não é uma previsão de nota.
+
+Nas questões, confira sua alternativa, o gabarito e a justificativa. As 80 novas questões de específicos também explicam individualmente os distratores. A aba **Apostila resumida** de Curitiba reúne 34 sínteses, exemplos e perguntas para recordar sem olhar; filtre por matéria ou pesquise o assunto. Os resumos não substituem a leitura do edital e das leis.
+
+## Atualizações
+
+Instale a versão 2.3.0 uma vez para habilitar atualizações futuras. Versões antigas em ZIP não adquirem essa função sozinhas. A PEP verifica versões após 20 segundos aberta e a cada quatro horas; também existe **Atualizações** no canto inferior e no menu Ajuda. A consulta manual tem intervalo mínimo de um minuto.
+
+O download ocorre em segundo plano. Quando estiver pronto, você pode continuar estudando ou selecionar **Reiniciar e atualizar**. Textos não salvos, simulado em andamento e gravações pendentes bloqueiam o reinício. Ao usar **Sair completamente** na bandeja, uma atualização já baixada também é instalada; fechar apenas a janela pode deixar o app na bandeja. Não há atualização com o app encerrado. Seus dados ficam fora da pasta do programa.
 
 ## Central de redações
 
@@ -33,6 +47,6 @@ Em **Configurar avisos**, escolha fontes, notificações e execução na bandeja
 
 Pressione Alt para acessar **Arquivo → Salvar backup**. O backup v4 inclui o perfil aberto, cursos, redações, correções e agenda; não contém senhas nem chaves. O app aceita backups das versões anteriores. Para importar em uma conta, entre primeiro nessa conta. A inicialização com Windows não é ativada pela importação.
 
-Os dados ficam em `%APPDATA%\PEP-Estudos-2.1`: o perfil antigo permanece na raiz e cada conta usa sua pasta em `perfis`. A pasta conserva esse nome por compatibilidade. O primeiro uso copia o progresso salvo da PEP 2.0 e da versão Prefeitura quando disponível, preservando os originais. As versões não sincronizam entre si.
+Os dados ficam em `%APPDATA%\PEP-Estudos-2.1`: o perfil antigo permanece na raiz e cada conta usa sua pasta em `perfis`. A pasta conserva esse nome por compatibilidade. O primeiro uso copia o progresso salvo da PEP 2.0 e da versão Prefeitura quando disponível, preservando os originais. As versões antigas e novas podem acessar o mesmo diretório de dados; evite executá-las ao mesmo tempo. Prefira a versão atual para preservar todos os recursos.
 
 Os cursos são material autoral de apoio, com links para fontes e provas oficiais. A preparação BB usa a seleção 2022/001 e provas de 2023. Conteúdo de estudo não garante aprovação; confira sempre o edital vigente.

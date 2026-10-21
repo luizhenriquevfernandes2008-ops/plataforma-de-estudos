@@ -1,4 +1,4 @@
-# Estado da versão 2.2.1 — 19/10/2026
+# Estado da versão 2.3.0 — 20/10/2026
 
 ## Concluído
 
@@ -8,13 +8,20 @@
 - Cadastro/login Supabase, confirmação e recuperação por código, sessão protegida pelo Windows, cópia local por conta, sincronização e resolução de conflitos.
 - Perfil antigo preservado e backups compatíveis com versões anteriores. Chaves privadas e sessões excluídas de backup, sincronização e distribuição. A URL e a chave pública Supabase são incluídas para cadastro imediato.
 
+- Diagnóstico por curso e por conta, confirmação no primeiro uso do computador e aba Estudos próprios com prioridades e treino a partir dos erros.
+- Curitiba com 160 questões, sendo 120 de específicos; 34 resumos autorais com exemplos e perguntas.
+- Instalador NSIS e atualização automática pelo GitHub: download em segundo plano e instalação no encerramento completo.
+
 ## Verificado
 
 - TypeScript sem erros e build de produção.
-- 22 testes automatizados: persistência, conteúdo, isolamento, revisão, autenticação, proteção da sessão, mesclagem, conflitos e falhas de rede.
+- 30 testes automatizados: persistência, conteúdo, isolamento, revisão, autenticação, proteção da sessão, mesclagem, conflitos e falhas de rede.
 - Interface Electron: tela cheia e áudio, revisão local, sugestões e desfazer, históricos independentes, proteção da chave pelo Windows, agenda, tema, navegação sem perder anotações, bandeja e backup v4.
 - Contas na interface com provedor simulado: bloqueio antes do login, troca A → B → A, isolamento e recebimento de progresso de outro dispositivo.
 - Consulta real das cinco fontes do radar em 19/10/2026. Fontes externas podem mudar depois dessa verificação.
+
+- Interface 2.3 exercitada com perfil isolado: diagnóstico, geração do plano, prática personalizada, explicação de erro, filtros dos 34 resumos, separação de cursos e bloqueio de reinício com anotação não salva.
+- Atualizador testado com eventos simulados: versão elegível, falhas, progresso, intervalo de consultas, cancelamento de saída e proteção de trabalhos pendentes.
 
 ## Ativação externa pendente
 

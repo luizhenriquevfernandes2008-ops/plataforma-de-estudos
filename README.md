@@ -1,6 +1,6 @@
 # PEP — Plataforma de Estudos
 
-Aplicativo de estudos para Windows, versão **2.2.1**. Cursos offline, central de redações, radar de concursos e integração de contas com Supabase.
+Aplicativo de estudos para Windows, versão **2.3.0**. Cursos offline, central de redações, radar de concursos e integração de contas com Supabase.
 
 ![Tela inicial de contas](docs/login.png)
 
@@ -8,13 +8,19 @@ Aplicativo de estudos para Windows, versão **2.2.1**. Cursos offline, central d
 
 | Trilha | Aulas-guia | Questões autorais |
 |---|---:|---:|
-| Curitiba — Agente Administrativo | 40 | 80 |
+| Curitiba — Agente Administrativo | 40 | 160 |
 | Banco do Brasil — Agente Comercial | 47 | 100 |
 | Banco do Brasil — Agente de Tecnologia | 50 | 102 |
 
 Inclui plano de 1 hora por dia, matérias, questões comentadas, simulados, cartões de memória, resumos, biblioteca de fontes, anotações, temas claro/escuro e abertura PEP com som original.
 
 Curitiba: Edital 4/2026, com link para a versão retificada em 15/10/2026, consultada em 19/10/2026. BB: preparação antecipada baseada no edital histórico 2022/001 e provas de 2023. O app não presume um novo edital ou data de nova prova. Questões são autorais de apoio; provas oficiais e livros externos são links.
+
+## Estudos próprios e apostila resumida
+
+O primeiro acesso a cada curso neste computador pede um diagnóstico, mesmo para contas existentes. Curitiba, BB Comercial e BB Tecnologia têm avaliações e planos separados. Informe nível por matéria, dificuldades, assuntos e tempo diário; a aba **Estudos próprios** combina essas respostas com aulas pendentes e erros para sugerir prioridades e treinos de dez questões. Você pode revisar o diagnóstico a qualquer momento. O plano é calculado localmente, sem serviço de IA.
+
+Curitiba agora tem **120 questões de Conhecimentos Específicos**, o triplo das 40 anteriores, e 160 no total. As 80 novas incluem justificativa de cada alternativa; todas as questões exibem gabarito e explicação após a correção. A nova aba **Apostila resumida** tem 34 sínteses autorais cobrindo Português, Raciocínio Lógico, Informática, Legislação e Específicos, com exemplos, pontos de atenção e perguntas de revisão. A apostila enviada pelo usuário orientou o roteiro; seu PDF não é redistribuído. Veja [Fontes do material](docs/FONTES-RESUMOS.md).
 
 ## Redações, radar e contas
 
@@ -29,7 +35,7 @@ Curitiba: Edital 4/2026, com link para a versão retificada em 15/10/2026, consu
 
 ## Usar no Windows
 
-Baixe o pacote na página de [releases](https://github.com/luizhenriquevfernandes2008-ops/plataforma-de-estudos/releases), extraia a pasta inteira e abra `PEP.exe`. Não mova só o executável. O pacote é uma versão de testes sem assinatura digital.
+Baixe `PEP-Setup-2.3.0-x64.exe` na página de [releases](https://github.com/luizhenriquevfernandes2008-ops/plataforma-de-estudos/releases/latest) e instale. Quem usa o ZIP antigo precisa instalar esta versão uma vez. Depois, a PEP procura novas versões, baixa em segundo plano e instala ao sair completamente ou pelo botão **Reiniciar e atualizar**. Fechar para a bandeja não encerra o aplicativo. Dados e contas anteriores são preservados. Distribuição Windows x64 sem assinatura digital.
 
 O app inicia em tela cheia. **Esc** sai e **F11** alterna. **Alt** mostra o menu para exportar/importar backup. Consulte o [guia de uso](docs/GUIA-PEP.md).
 
@@ -51,7 +57,7 @@ O comando de instalação do Electron também atende ambientes com scripts do np
 npm run package:win
 ```
 
-Saída: `dist/PEP-win32-x64/PEP.exe`. O empacotador usa uma lista explícita de arquivos e não inclui testes, perfis, credenciais ou fonte de desenvolvimento. Preserve a pasta de um pacote anterior antes de gerar outro.
+Saída: `dist/installer/PEP-Setup-<versão>-x64.exe`, seu `.blockmap` e `latest.yml`. Publique os três juntos em uma release pública normal, com tag `v<versão>`. Releases em rascunho ou marcadas como prerelease não chegam aos usuários. Veja [Publicar atualizações](docs/ATUALIZACOES.md). O empacotamento usa uma lista explícita de arquivos de runtime e dependências de produção; não inclui perfis, credenciais ou a apostila original.
 
 ## Dados e funcionamento
 

@@ -1,4 +1,5 @@
-export type Question={id:string;subject:string;lesson:string;text:string;options:string[];correct:number;explanation:string;difficulty:string};
+import {extraCuritibaQuestions} from './curitiba-extra';
+export type Question={id:string;subject:string;lesson:string;text:string;options:string[];correct:number;explanation:string;difficulty:string;optionExplanations?:string[]};
 export const questions:Question[]=[];
 function q(subject:string,lesson:string,text:string,answer:string,wrong:string[],explanation:string,difficulty='Fundamentos'){const n=questions.length;const correct=(n*3+2)%5;const options=[...wrong];options.splice(correct,0,answer);questions.push({id:`q${n+1}`,subject,lesson,text,options,correct,explanation,difficulty})}
 q('por','p01','Leia: “O serviço digital agiliza pedidos, mas não alcança todos os usuários.” Qual conclusão tem apoio no texto?','Há usuários que não são alcançados pelo serviço digital.',['Nenhum usuário usa o serviço.','O atendimento presencial acabou.','Todos os pedidos digitais são resolvidos.','O serviço digital é inútil.'],'“Não alcança todos” indica uma limitação de alcance. As outras alternativas acrescentam informações não afirmadas.');
@@ -81,3 +82,4 @@ q('esp','e14','Qual frase é mais clara e objetiva para solicitar uma providênc
 q('esp','e14','Concisão na redação oficial significa:','Eliminar excessos mantendo informações essenciais.',['Omitir o pedido principal.','Usar apenas siglas desconhecidas.','Remover todos os fundamentos.','Escrever sem revisar.'],'Texto conciso é suficiente e direto; não sacrifica informações indispensáveis.');
 q('esp','e15','Uma pesquisa de satisfação entrevista somente usuários que elogiaram o serviço. O principal risco é:','Viés de seleção.',['Representatividade garantida.','Ausência de qualquer viés.','Causalidade comprovada.','Impossibilidade de usar dados.'],'A seleção exclui sistematicamente outras experiências e pode distorcer a conclusão.');
 q('esp','e15','Em pesquisa, amostra é:','Uma parcela da população de interesse.',['Sempre toda a população.','A conclusão definitiva antes dos dados.','O instrumento de protocolo.','Uma regra de pontuação.'],'A amostra é parte do conjunto estudado; sua seleção afeta a possibilidade de generalização.');
+questions.push(...extraCuritibaQuestions);

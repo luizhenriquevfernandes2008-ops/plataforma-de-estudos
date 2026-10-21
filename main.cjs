@@ -7,6 +7,7 @@ const {createEssayService,localReview,validateDraft}=require('./essay-service.cj
 const {createRadar,DEFAULT}=require('./radar.cjs');
 const {createCloudAuth}=require('./cloud-auth.cjs');
 const {createCloudSync}=require('./cloud-sync.cjs');
+const {createUpdates}=require('./updater.cjs');
 app.setName('PEPEstudos22');
 app.setAppUserModelId('PEP.Estudos.22');
 app.setPath('userData',(!app.isPackaged&&process.env.PEP_QA_DIR)||path.join(app.getPath('appData'),'PEP-Estudos-2.1'));
@@ -58,11 +59,20 @@ const root=path.join(__dirname,'renderer');
 const csp="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.wav':'audio/wav'};
 let win;
+const updatesEnabled=app.isPackaged&&require('node:fs').existsSync(path.join(process.resourcesPath,'app-update.yml'))&&require('node:fs').existsSync(path.join(path.dirname(process.execPath),'Uninstall PEP.exe'));
+const updates=createUpdates(updatesEnabled?require('electron-updater').autoUpdater:null,{version:require('./package.json').version,enabled:updatesEnabled,canRestart:async()=>{
+ if(activeWrites||accountBusy||switching||(syncer&&(await syncer.status()).syncing))return false;
+ return !win||win.isDestroyed()||await win.webContents.executeJavaScript("window.dispatchEvent(new Event('beforeunload',{cancelable:true}))");
+},quit:()=>app.quit()});
+function showUpdates(){if(win&&!win.isDestroyed()){win.show();win.focus();win.webContents.executeJavaScript("window.dispatchEvent(new Event('pep-open-updates'))").catch(()=>{});}}
 const json=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});
 function external(url){try{const u=new URL(url);if(u.protocol==='https:'&&!u.username&&!u.password)shell.openExternal(u.href);}catch{}}
 async function handler(request){
  const route=new URL(request.url).pathname;
  if(new URL(request.url).hostname!=='app')return json({error:'Endereço inválido.'},403);
+ if(route==='/api/updates'){
+  try{if(request.method==='GET')return json(updates.status());if(request.method!=='POST')return json({error:'Método inválido.'},405);const raw=await request.text();if(raw.length>1000)return json({error:'Solicitação inválida.'},413);const {action}=JSON.parse(raw);if(action==='check')return json(await updates.check());if(action==='install')return json(await updates.install());throw Error('Operação inválida.');}catch(e){return json({error:e.message},400);}
+ }
  if(route==='/api/account'){if(request.method==='GET')return accountHandler(request);if(accountBusy)return json({error:'Aguarde a operação de conta terminar.'},409);accountBusy=true;try{return await accountHandler(request);}finally{accountBusy=false;}}
  if(route.startsWith('/api/')&&route!=='/api/window'&&(!profile||switching))return json({error:'Entre em uma conta ou abra o perfil local.'},401);
  const writing=request.method==='POST';if(writing)activeWrites++;
@@ -88,11 +98,12 @@ async function routeHandler(request){
   const pref=u.pathname==='/api/preferences';const selected=pref?preferences:stores[u.searchParams.get('course')];
   if(!selected)return json({error:'Curso inválido.'},400);
   try{
-   if(request.method==='GET')return json({records:await selected.read()});
+   if(request.method==='GET'){let diagnosticNeeded=false;if(!pref){try{await fs.access(path.join(path.dirname(selected.file),'diagnostic-seen.json'));}catch{diagnosticNeeded=true;}}return json({records:await selected.read(),diagnosticNeeded});}
    if(request.method!=='POST')return json({error:'Método inválido.'},405);
    const raw=await request.text();if(raw.length>72000)return json({error:'Registro muito grande.'},413);
    const {key,value}=JSON.parse(raw);if(pref&&!['settings:theme','settings:sound'].includes(key))return json({error:'Preferência inválida.'},400);
    validate({[key]:value});await selected.save(key,value);
+   if(!pref&&key==='lesson:diagnostic')await fs.writeFile(path.join(path.dirname(selected.file),'diagnostic-seen.json'),JSON.stringify({completed:true}));
    if(pref&&key==='settings:theme'){nativeTheme.themeSource=value.mode;win?.setBackgroundColor(value.mode==='dark'?'#111923':'#f4f5f7');}
    return json({ok:true});
   }catch(e){return json({error:e.message||'Não foi possível salvar.'},503);}
@@ -133,27 +144,29 @@ async function importPrevious(){
  if(process.env.PEP_QA_DIR)return;
  for(const id of [...ids,'preferencias']){const target=id==='preferencias'?preferences:stores[id];try{await fs.access(target.file);continue;}catch(e){if(e.code!=='ENOENT')continue;}try{const records=validate(JSON.parse(await fs.readFile(path.join(app.getPath('appData'),'PEP-Estudos-Teste',id,'progresso.json'),'utf8')));await target.merge(records);}catch(e){if(e.code!=='ENOENT')dialog.showErrorBox('Dados anteriores preservados','Não foi possível copiar '+id+'. A versão 2.0 continua intacta; restaure um backup pelo menu Arquivo.');}}
 }
-function createTray(){try{tray=new Tray(path.join(__dirname,'icon.ico'));tray.setToolTip('PEP · Radar de concursos');tray.on('double-click',()=>{win.show();win.focus();});tray.setContextMenu(Menu.buildFromTemplate([{label:'Abrir PEP',click:()=>{win.show();win.focus();}},{label:'Verificar publicações agora',click:()=>radar?.check(true).catch(()=>{})},{label:'Sair completamente',click:()=>{quitting=true;app.quit();}}]));}catch{background=false;}}
+function createTray(){try{tray=new Tray(path.join(__dirname,'icon.ico'));tray.setToolTip('PEP · Radar de concursos');tray.on('double-click',()=>{win.show();win.focus();});tray.setContextMenu(Menu.buildFromTemplate([{label:'Abrir PEP',click:()=>{win.show();win.focus();}},{label:'Atualizações da PEP',click:showUpdates},{label:'Verificar publicações agora',click:()=>radar?.check(true).catch(()=>{})},{label:'Sair completamente',click:()=>{quitting=true;app.quit();}}]));}catch{background=false;}}
 function createWindow(){
  const hidden=process.argv.includes('--background');
  win=new BrowserWindow({width:1380,height:940,minWidth:940,minHeight:680,fullscreen:true,show:!hidden,autoHideMenuBar:true,title:'PEP · Plataforma de Estudos',backgroundColor:'#111923',icon:path.join(__dirname,'icon.ico'),webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,spellcheck:false,backgroundThrottling:false,autoplayPolicy:'no-user-gesture-required'}});
  win.on('close',event=>{if(!quitting&&background){event.preventDefault();win.hide();}});
+ win.on('query-session-end',()=>updates.sessionEnding());
  win.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&(input.key==='F11'||input.key==='Escape'&&win.isFullScreen())){event.preventDefault();win.setFullScreen(!win.isFullScreen());}});
  win.webContents.setWindowOpenHandler(({url})=>{external(url);return{action:'deny'};});
  win.webContents.on('will-navigate',(event,url)=>{const u=new URL(url);if(u.protocol!=='study:'||u.hostname!=='app'){event.preventDefault();external(url);}});
- win.webContents.on('will-prevent-unload',event=>{const answer=dialog.showMessageBoxSync(win,{type:'question',buttons:['Continuar estudando','Sair sem salvar'],defaultId:0,cancelId:0,message:'Há alterações não salvas ou um simulado em andamento.',detail:'Volte para salvar seu trabalho antes de sair.'});if(answer===1)event.preventDefault();else quitting=false;});
+ win.webContents.on('will-prevent-unload',event=>{const answer=dialog.showMessageBoxSync(win,{type:'question',buttons:['Continuar estudando','Sair sem salvar'],defaultId:0,cancelId:0,message:'Há alterações não salvas ou um simulado em andamento.',detail:'Volte para salvar seu trabalho antes de sair.'});if(answer===1)event.preventDefault();else {quitting=false;updates.cancelRestart();}});
  win.loadURL('study://app/'+(hidden?'?background=1':''));
  Menu.setApplicationMenu(Menu.buildFromTemplate([
  {label:'Arquivo',submenu:[{label:'Salvar backup de todos os cursos…',accelerator:'CmdOrCtrl+Shift+S',click:backup},{label:'Restaurar backup…',click:restore},{label:'Pasta do progresso',click:()=>shell.openPath(profileDirectory)},{type:'separator'},{label:'Imprimir página…',accelerator:'CmdOrCtrl+P',click:()=>win.webContents.print({printBackground:true})},{label:'Sair',role:'quit'}]},
  {label:'Editar',submenu:[{label:'Desfazer',role:'undo'},{label:'Refazer',role:'redo'},{type:'separator'},{label:'Recortar',role:'cut'},{label:'Copiar',role:'copy'},{label:'Colar',role:'paste'},{label:'Selecionar tudo',role:'selectAll'}]},
  {label:'Exibir',submenu:[{label:'Recarregar',role:'reload'},{label:'Tamanho original',role:'resetZoom'},{label:'Aumentar',role:'zoomIn'},{label:'Diminuir',role:'zoomOut'},{label:'Tela inteira',role:'togglefullscreen'}]},
- {label:'Ajuda',submenu:[{label:'Como estudar',click:()=>dialog.showMessageBox(win,{message:'Uma hora por dia.',detail:'10 min de revisão, 25 min de aula, 20 min de questões e 5 min de caderno. Escolha uma trilha por sessão. O progresso dos cursos é separado.\n\nConteúdo e progresso funcionam offline. Fontes e livros externos precisam de internet. Salve um backup semanal pelo menu Arquivo.'})},{label:'Sobre PEP',click:()=>dialog.showMessageBox(win,{message:'PEP · 2.2.1 · Versão de testes',detail:'Curitiba: Agente Administrativo. Banco do Brasil: Agente Comercial e Agente de Tecnologia.\n\nBB usa edital histórico 2022/001, prova 2023. Radar de publicações oficiais e central de redações com Groq. Aulas-guia e questões autorais de apoio, sem vínculo com órgãos ou bancas. Não há garantia de aprovação.'})}]}
+ {label:'Ajuda',submenu:[{label:'Atualizações da PEP',click:showUpdates},{label:'Como estudar',click:()=>dialog.showMessageBox(win,{message:'Uma hora por dia.',detail:'10 min de revisão, 25 min de aula, 20 min de questões e 5 min de caderno. Escolha uma trilha por sessão. O progresso dos cursos é separado.\n\nConteúdo e progresso funcionam offline. Fontes e livros externos precisam de internet. Salve um backup semanal pelo menu Arquivo.'})},{label:'Sobre PEP',click:()=>dialog.showMessageBox(win,{message:'PEP · 2.3.0 · Versão de testes',detail:'Curitiba: Agente Administrativo. Banco do Brasil: Agente Comercial e Agente de Tecnologia.\n\nBB usa edital histórico 2022/001, prova 2023. Radar de publicações oficiais e central de redações com Groq. Aulas-guia e questões autorais de apoio, sem vínculo com órgãos ou bancas. Não há garantia de aprovação.'})}]}
  ]));
 }
 if(!app.requestSingleInstanceLock())app.quit();else{
  app.on('second-instance',()=>{if(win){if(win.isMinimized())win.restore();win.show();win.focus();}});
- app.whenReady().then(async()=>{await importPrevious();await importLegacy();await auth.init();if(auth.publicStatus().user)await activate();else {let local=false;try{local=JSON.parse(await fs.readFile(path.join(baseDirectory,'profile-choice.json'),'utf8')).guest===true;}catch{}if(local||process.env.PEP_QA_GUEST&&!app.isPackaged)await activate(true);else background=false;}protocol.handle('study',handler);session.defaultSession.setPermissionRequestHandler((_c,_p,cb)=>cb(false));createWindow();createTray();});
- app.on('before-quit',()=>{quitting=true;});
- app.on('will-quit',()=>{radar?.stop();syncer?.stop();});
+ app.whenReady().then(async()=>{await importPrevious();await importLegacy();await auth.init();if(auth.publicStatus().user)await activate();else {let local=false;try{local=JSON.parse(await fs.readFile(path.join(baseDirectory,'profile-choice.json'),'utf8')).guest===true;}catch{}if(local||process.env.PEP_QA_GUEST&&!app.isPackaged)await activate(true);else background=false;}protocol.handle('study',handler);session.defaultSession.setPermissionRequestHandler((_c,_p,cb)=>cb(false));createWindow();createTray();updates.start();});
+ app.on('before-quit',event=>{if(activeWrites||accountBusy||switching){event.preventDefault();quitting=false;updates.cancelRestart();dialog.showMessageBox(win,{message:'Aguarde o salvamento terminar antes de sair.'});return;}quitting=true;});
+ app.on('quit',()=>updates.onQuit());
+ app.on('will-quit',()=>{updates.stop();radar?.stop();syncer?.stop();});
  app.on('window-all-closed',()=>{if(!background||quitting)app.quit();});
 }

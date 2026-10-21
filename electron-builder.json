@@ -1,0 +1,27 @@
+{
+  "appId": "PEP.Estudos.22",
+  "productName": "PEP",
+  "directories": {"output": "dist/installer", "buildResources": "."},
+  "asar": true,
+  "npmRebuild": false,
+  "files": [
+    "main.cjs", "store.cjs", "central-store.cjs", "essay-service.cjs",
+    "radar.cjs", "cloud-auth.cjs", "cloud-defaults.json", "cloud-sync.cjs",
+    "updater.cjs", "icon.ico", "icon.png", "renderer/**/*"
+  ],
+  "extraFiles": [{"from":"docs", "to":"docs"}, {"from":"supabase", "to":"supabase"}],
+  "win": {"target":[{"target":"nsis","arch":["x64"]}], "icon":"icon.ico", "executableName":"PEP"},
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowElevation": false,
+    "allowToChangeInstallationDirectory": false,
+    "deleteAppDataOnUninstall": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "PEP",
+    "runAfterFinish": true,
+    "artifactName": "PEP-Setup-${version}-${arch}.${ext}"
+  },
+  "publish": [{"provider":"github", "owner":"luizhenriquevfernandes2008-ops", "repo":"plataforma-de-estudos", "releaseType":"release"}]
+}
